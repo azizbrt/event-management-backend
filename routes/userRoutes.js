@@ -10,13 +10,13 @@ router.get("/admin", verifyToken, verifyRole("admin"), (req, res) => {
 });
 
 // Admin et gestionnaire ont accès
-router.get("/manager", verifyToken, verifyRole("admin", "gestionnaire"), (req, res) => {
+router.get("/manager", verifyToken, verifyRole(["admin", "gestionnaire"]), (req, res) => {
     res.json({ success: true, message: "Bienvenue sur le tableau de bord Gestionnaire" });
 });
 
 // Tous les utilisateurs connectés (participant inclus) peuvent accéder
-router.get("/participant", verifyToken, verifyRole("admin", "gestionnaire", "participant"), (req, res) => {
-    res.json({ success: true, message: "Bienvenue sur votre espace utilisateur" });
+router.get("/participant", verifyToken, verifyRole(["admin", "gestionnaire", "participant"]), (req, res) => {
+    res.json({ success: true, message: "Bienvenue sur votre espace particiânt" });
 });
 
 //  Route publique accessible à tout le monde

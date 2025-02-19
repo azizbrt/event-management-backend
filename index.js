@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 🔴 Définir corsOption AVANT de l'utiliser
+//  Définir corsOption AVANT de l'utiliser
 const corsOption = {
   origin: "http://localhost:3000",
   credentials: true,
