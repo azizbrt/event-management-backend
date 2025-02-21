@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/userRoutes.js";
+import CategorieRoutes from "./routes/categorieRoutes.js";
 
 dotenv.config();
 
@@ -27,6 +28,8 @@ app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 //user routes
 app.use("/api/users", userRoutes);
+//Categorie routes
+app.use("/api/categories", CategorieRoutes);
 
 app.get("/home", (req, res) => {
   return res
