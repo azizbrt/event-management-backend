@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/userRoutes.js";
 import CategorieRoutes from "./routes/categorieRoutes.js";
+import eventRoutes from "./routes/event.routes.js";
 
 dotenv.config();
 
@@ -30,6 +31,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 //Categorie routes
 app.use("/api/categories", CategorieRoutes);
+//events routes
+app.use("/api/events", eventRoutes);
 
 app.get("/home", (req, res) => {
   return res
