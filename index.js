@@ -7,6 +7,9 @@ import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/userRoutes.js";
 import CategorieRoutes from "./routes/categorieRoutes.js";
 import eventRoutes from "./routes/event.routes.js";
+import inscriptionRoutes from "./routes/inscriptions.route.js";
+
+import commentaireRoutes from "./routes/commentaire.route.js";
 
 dotenv.config();
 
@@ -33,6 +36,10 @@ app.use("/api/users", userRoutes);
 app.use("/api/categories", CategorieRoutes);
 //events routes
 app.use("/api/events", eventRoutes);
+//inscription routes
+app.use("/api/inscription", inscriptionRoutes);
+//commentaires routes
+app.use("/api/commentaires", commentaireRoutes);
 
 app.get("/home", (req, res) => {
   return res

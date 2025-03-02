@@ -17,6 +17,7 @@ export function verifyToken(req, res, next) {
             id: decoded.userId,
             role: decoded.role,  // On stocke aussi le rôle
         };
+        console.log("🔑 Utilisateur authentifié :", req.user); // ✅ Vérification
 
         next();
     } catch (error) {

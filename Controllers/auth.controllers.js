@@ -32,7 +32,7 @@ export const signup = async (req, res) => {
   
       await user.save();
   
-      // Correction ici : passer 3 arguments à sendVerificationEmail
+      // Correction ici : passer arguments à sendVerificationEmail
       await sendVerificationEmail(user.email, user.name, verificationToken);
   
       res.status(201).json({ message: "Compte créé ! Vérifiez votre email." });
