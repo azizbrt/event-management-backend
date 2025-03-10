@@ -8,8 +8,9 @@ import userRoutes from "./routes/userRoutes.js";
 import CategorieRoutes from "./routes/categorieRoutes.js";
 import eventRoutes from "./routes/event.routes.js";
 import inscriptionRoutes from "./routes/inscriptions.route.js";
-
 import commentaireRoutes from "./routes/commentaire.route.js";
+import adminRoutes from "./routes/admin.routes.js";
+import messageRoutes from "./routes/message.route.js";
 
 dotenv.config();
 
@@ -40,6 +41,10 @@ app.use("/api/events", eventRoutes);
 app.use("/api/inscription", inscriptionRoutes);
 //commentaires routes
 app.use("/api/commentaires", commentaireRoutes);
+//admin routes
+app.use("/api/admin", adminRoutes);
+//message routes
+app.use("/api/message", messageRoutes);
 
 app.get("/home", (req, res) => {
   return res

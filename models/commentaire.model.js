@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-
-
 const commentaireSchema = new mongoose.Schema({
     utilisateurId: {
         type: mongoose.Schema.Types.ObjectId,

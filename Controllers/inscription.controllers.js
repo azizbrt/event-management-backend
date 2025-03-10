@@ -2,22 +2,36 @@ import Inscription from "../models/inscription.model.js";
 import Event from "../models/Event.js";
 import User from "../models/user.model.js"; // Mets le bon chemin vers ton modèle
 import { sendInscriptionEmail, sendValidationEmail } from "../services/emailService.js";
+import mongoose from "mongoose";
 
 export const inscrireUtilisateur = async (req, res) => {
   try {
+    const { evenementId } = req.body;  // ID de l'événement auquel l'utilisateur veut s'inscrire
+    const utilisateurId = req.user?.id; // ID de l'utilisateur qui essaie de s'inscrire
 
+    // 1. Vérifier si l'utilisateur est connecté
+    if (!utilisateurId) {
+      return res
+        .status(401)
+        .json({ success: false, message: "❌ Vous devez être connecté pour vous inscrire !" });
+    }
 
-    const { evenementId } = req.body;
+    // 2. Vérifier si l'ID de l'événement est valide
+    if (!mongoose.Types.ObjectId.isValid(evenementId)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "❌ L'ID de l'événement est invalide !" });
+    }
 
-    // ✅ 1. Vérifier si l'événement existe
+    // 3. Récupérer l'événement et vérifier s'il existe
     const event = await Event.findById(evenementId);
     if (!event) {
       return res
         .status(404)
-        .json({ success: false, message: "❌ Événement introuvable !" });
+        .json({ success: false, message: "❌ Événement non trouvé !" });
     }
 
-    // ✅ 2. Vérifier si l'événement est déjà complet
+    // 4. Vérifier si l'événement est déjà complet
     const inscriptionsCount = await Inscription.countDocuments({ evenementId });
     if (inscriptionsCount >= event.capacite) {
       return res
@@ -25,37 +39,38 @@ export const inscrireUtilisateur = async (req, res) => {
         .json({ success: false, message: "⚠️ L'événement est complet !" });
     }
 
-    // ✅ 3. Vérifier si l'utilisateur est déjà inscrit
+    // 5. Vérifier si l'utilisateur est déjà inscrit
     const inscriptionExistante = await Inscription.findOne({
-      utilisateurId: utilisateur.id,
+      utilisateurId,
       evenementId,
     });
+
     if (inscriptionExistante) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "⚠️ Vous êtes déjà inscrit à cet événement !",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "⚠️ Vous êtes déjà inscrit à cet événement !",
+      });
     }
 
-    // ✅ 4. Créer une nouvelle inscription
+    // 6. Inscrire l'utilisateur à l'événement
     const nouvelleInscription = new Inscription({
-      utilisateurId: utilisateur.id,
+      utilisateurId,
       evenementId,
-      status: "en attente",
+      status: "en attente", // En attente de confirmation
     });
 
     await nouvelleInscription.save();
 
-    // 📧 Vérifier et envoyer un email
-    if (!utilisateur.email) {
-      return res
-        .status(400)
-        .json({ message: "❌ L'utilisateur n'a pas d'email enregistré !" });
+    // 7. Envoyer un email de confirmation à l'utilisateur
+    const utilisateur = await User.findById(utilisateurId);
+    if (!utilisateur || !utilisateur.email) {
+      return res.status(400).json({
+        success: false,
+        message: "❌ L'utilisateur n'a pas d'email enregistré !",
+      });
     }
 
-    console.log(`📩 Envoi d'email de confirmation à ${utilisateur.email}...`);
+    console.log(`📩 Envoi de l'email de confirmation à ${utilisateur.email}...`);
     await sendInscriptionEmail(
       utilisateur.email,
       utilisateur.name,
@@ -63,13 +78,14 @@ export const inscrireUtilisateur = async (req, res) => {
       event.dateDebut
     );
 
+    // 8. Confirmer à l'utilisateur que l'inscription a réussi
     res.status(201).json({
       success: true,
-      message:
-        "✅ Inscription réussie ! Un email de confirmation a été envoyé.",
+      message: "✅ Inscription réussie ! Un email de confirmation a été envoyé.",
       inscription: nouvelleInscription,
     });
   } catch (error) {
+    // En cas d'erreur, afficher un message d'erreur
     console.error("❌ Erreur lors de l'inscription :", error);
     res.status(500).json({
       success: false,
@@ -78,6 +94,8 @@ export const inscrireUtilisateur = async (req, res) => {
     });
   }
 };
+
+
 
 export const consulterInscriptions = async (req, res) => {
   try {
