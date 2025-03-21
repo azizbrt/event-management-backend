@@ -16,5 +16,4 @@ app.put("/annulee/:id",verifyToken, verifyRole(["gestionnaire"]),annulerInscript
 //annuler une inscription pour participation
 app.delete("/annuleeinscription/:id",verifyToken,verifyRole(["participant"]),supprimerInscription) ;
 
-
 export default app;

@@ -12,7 +12,6 @@ app.post("/create",verifyToken, verifyRole("gestionnaire"),  createEvent);
 app.get("/get",verifyToken,getAllEvents);
 //Récupérer un événement spécifique par ID
 app.get("/get/:id",verifyToken, verifyRole("gestionnaire", "admin"), getEventById);
-
 //Modifier un événement spécifique par ID
 app.put("/update/:id", verifyToken, verifyRole("gestionnaire", "admin"), updateEvent);
 //Supprimer un événement spécifique par ID
