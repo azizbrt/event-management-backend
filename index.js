@@ -19,7 +19,7 @@ const PORT = process.env.PORT || 3000;
 
 //  Définir corsOption AVANT de l'utiliser
 const corsOption = {
-  origin: "http://localhost:3000",
+  origin: "http://localhost:5173",
   credentials: true,
 };
 

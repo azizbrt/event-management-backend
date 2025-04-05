@@ -98,31 +98,57 @@ export const logout = async (req, res) => {
 };
 
 export const verifyEmail = async (req, res) => {
-  const { token } = req.query;
+  const { code } = req.body;
+  console.log("Code reçu :", code); // 👈 Vérifie bien qu'il arrive
 
   try {
-    const user = await User.findOne({
-      verificationToken: token,
-      verificationExpiresAt: { $gt: Date.now() },
-    });
+    console.log("Code reçu :", code);
+console.log("Date actuelle :", new Date());
+const codeStr = String(code).trim();
+console.log("🔍 Code nettoyé :", codeStr);
+
+const user = await User.findOne({
+  verificationToken: codeStr,
+  verificationExpiresAt: { $gt: Date.now() },
+});
+console.log("✅ Sans date, utilisateur trouvé ?", user);
+    console.log("Utilisateur trouvé :", user); // 👈 Vérifie si un user est trouvé
 
     if (!user) {
-      return res.status(400).json({ message: "Token invalide ou expiré." });
+      return res.status(400).json({
+        success: false,
+        message: "Code de vérification invalide ou expiré.",
+      });
     }
 
+    // Marquer l'utilisateur comme vérifié
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationExpiresAt = undefined;
+    
     await user.save();
 
-    // ENVOYER EMAIL DE BIENVENUE
+    // Envoi de l'email de bienvenue
     await sendWelcomeEmail(user.email, user.name);
 
-    res.status(200).json({ message: "Email vérifié avec succès !" });
+    // Réponse avec succès sans mot de passe
+    const { password, ...userData } = user._doc;
+
+    res.status(200).json({
+      success: true,
+      message: "Email vérifié avec succès.",
+      user: userData,
+    });
+
   } catch (error) {
-    res.status(500).json({ message: "Erreur lors de la vérification de l'email", error });
+    console.error("Erreur lors de la vérification de l'email:", error);
+    res.status(500).json({
+      success: false,
+      message: "Erreur serveur lors de la vérification.",
+    });
   }
 };
+
 export const forgotpassword = async (req, res) => {
   const { email } = req.body;
   

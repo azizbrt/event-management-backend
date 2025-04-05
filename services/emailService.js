@@ -19,28 +19,36 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-export const sendVerificationEmail = async (email, userName, token) => {
-    try {
-      if (!token) {
-        throw new Error("Le token de vérification est manquant !");
-      }
-  
-      const verificationLink = `http://localhost:8000/api/auth/verify-email?token=${token}`;
-      console.log("🔗 Lien de vérification :", verificationLink);
-  
-      const mailOptions = {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Vérification de votre compte",
-        html: verificationMailTemplate(userName, verificationLink),
-      };
-  
-      await transporter.sendMail(mailOptions);
-      console.log(`📩 Email de vérification envoyé à ${email} !`);
-    } catch (error) {
-      console.error("❌ Erreur d'envoi de l'email de vérification :", error.message);
+export const sendVerificationEmail = async (email, userName, verificationCode) => {
+  try {
+    if (!verificationCode) {
+      throw new Error("Le code de vérification est manquant !");
     }
-  };
+
+    // Create a transporter using your email configuration
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    // Prepare the email content using the updated template
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Vérification de votre compte",
+      html: verificationMailTemplate(userName, verificationCode),
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`📩 Email de vérification envoyé à ${email} !`);
+  } catch (error) {
+    console.error("❌ Erreur d'envoi de l'email de vérification :", error.message);
+    throw error;
+  }
+};
   
 
 export const sendWelcomeEmail = async (email, userName) => {

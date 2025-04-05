@@ -1,13 +1,16 @@
-export const verificationMailTemplate = (userName, verificationLink) => `
+export const verificationMailTemplate = (userName, verificationCode) => `
   <div style="font-family: Arial, sans-serif; text-align: center;">
     <h2 style="color: #4CAF50;">Vérification de votre compte</h2>
     <p>Bonjour <strong>${userName}</strong>,</p>
-    <p>Merci de vous être inscrit ! Veuillez vérifier votre adresse e-mail en cliquant sur le bouton ci-dessous :</p>
-    <a href="${verificationLink}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Vérifier mon compte</a>
-    <p>Ce lien expirera dans 24 heures.</p>
+    <p>Merci de vous être inscrit ! Voici votre code de vérification :</p>
+    <div style="font-size: 24px; font-weight: bold; margin: 20px auto; padding: 10px; background-color: #4CAF50; color: white; border-radius: 5px; width: fit-content;">
+      ${verificationCode}
+    </div>
+    <p>Ce code expirera dans 24 heures.</p>
     <p style="margin-top: 20px; color: #777;">🚀 L'équipe Event Management</p>
   </div>
 `;
+
 
 export const welcomeMailTemplate = (userName) => `
   <div style="font-family: Arial, sans-serif; text-align: center;">
