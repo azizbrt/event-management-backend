@@ -34,6 +34,7 @@ export const passwordResetRequestTemplate = (userName, resetLink) => `
   </div>
 `;
 
+
 export const passwordResetSuccessTemplate = (userName) => `
   <div style="font-family: Arial, sans-serif; text-align: center;">
     <h2 style="color: #4CAF50;">Mot de passe réinitialisé</h2>

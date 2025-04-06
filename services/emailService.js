@@ -69,7 +69,7 @@ export const sendWelcomeEmail = async (email, userName) => {
 
 export const sendPasswordResetEmail = async (email, userName, resetToken) => {
   try {
-    const resetLink = `${process.env.BASE_URL}/reset-password?token=${resetToken}`;;
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password/${resetToken}`;
     console.log("Reset Link: mta3 email service", resetLink);
 
 
