@@ -292,4 +292,50 @@ export const checkAuth = async (req, res) => {
       .json({ success: false, message: "Erreur serveur", error: error.message });
   }
 };
+// ✅ Mise à jour du profil utilisateur
+
+export const updateUserProfile = async (req, res) => {
+  try {
+    // Vérifier si le user est authentifié
+    const user = await User.findById(req.user.id); // Utilise req.user.id au lieu de req.user._id
+    console.log('Utilisateur trouvé dans la requête:', req.user);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+    }
+
+    // Mise à jour des champs utilisateur si de nouvelles données sont envoyées
+    user.name = req.body.name || user.name;
+    user.email = req.body.email || user.email;
+    user.password = req.body.password || user.password
+      // Hashage du nouveau mot de passe avant de le sauvegarder
+      user.password = await bcrypt.hash(req.body.password, 10);
+
+    // Générer le token et l'envoyer via un cookie
+    generateTokenAndSetCookie(res, user._id, user.role);
+
+    // Mettre à jour la date de dernière connexion
+    user.lastupdate = new Date();
+    await user.save();
+
+    // Réponse avec les infos de l'utilisateur (sans le mot de passe)
+    res.status(200).json({
+      success: true,
+      message: "Profil mis à jour avec succès!",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        lastupdate: user.lastupdate,
+      },
+    });
+  } catch (error) {
+    console.error("❌ Erreur dans updateUserProfile:", error);
+    return res.status(500).json({ success: false, message: "Erreur serveur", error: error.message });
+  }
+};
+
+
 
