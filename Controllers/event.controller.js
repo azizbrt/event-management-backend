@@ -13,13 +13,13 @@ export const createEvent = async (req, res) => {
       capacite,
       categorieId,
       lienInscription,
-      image,
       tag,
       prix,
       organisateurId,
     } = req.body;
 
-    //  Vérifions si toutes les infos importantes sont là
+    const imageFile = req.file; 
+
     if (
       !titre ||
       !description ||
@@ -29,8 +29,8 @@ export const createEvent = async (req, res) => {
       !lieu ||
       !capacite ||
       !categorieId ||
-      !image ||
-      !organisateurId
+      !organisateurId ||
+      !imageFile
     ) {
       return res.status(400).json({
         success: false,
@@ -38,7 +38,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // ⏳ Vérifions la date
     if (new Date(dateFin) <= new Date(dateDebut)) {
       return res.status(400).json({
         success: false,
@@ -46,7 +45,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // 🛑 Vérifier que les événements physiques ont une adresse valide
     if (typeEvenement === "physique" && lieu.startsWith("http")) {
       return res.status(400).json({
         success: false,
@@ -55,7 +53,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // 🔍 Vérifions si un événement avec le même titre existe déjà pour cet organisateur
     const evenementExiste = await Event.findOne({ titre, organisateurId });
     if (evenementExiste) {
       return res.status(409).json({
@@ -64,7 +61,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // 🎉 Créons l'événement
     const nouvelEvenement = new Event({
       titre,
       description,
@@ -76,7 +72,7 @@ export const createEvent = async (req, res) => {
       categorieId,
       organisateurId,
       lienInscription,
-      image,
+      image: imageFile.filename, // ou imageFile.path selon config
       tag,
       prix,
       etat: "en attendant",
@@ -98,6 +94,7 @@ export const createEvent = async (req, res) => {
     });
   }
 };
+
 export const getAllEvents = async (req, res) => {
   try {
     // 📢 On prend tous les événements dans la base de données
@@ -317,3 +314,13 @@ export const getEventById  = async (req,res)=>{
         
     }
 }
+export const getRandomEvents = async (req, res) => {
+  try {
+    // This picks 5 random events from your collection
+    const randomEvents = await Event.aggregate([{ $sample: { size: 5 } }]);
+    res.json(randomEvents);
+  } catch (error) {
+    console.error("Error fetching random events:", error);
+    res.status(500).json({ message: "Error fetching random events" });
+  }
+};

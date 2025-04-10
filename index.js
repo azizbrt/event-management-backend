@@ -37,6 +37,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/categories", CategorieRoutes);
 //events routes
 app.use("/api/events", eventRoutes);
+//image route
+app.use("/images", express.static("public/images"));
 //inscription routes
 app.use("/api/inscription", inscriptionRoutes);
 //commentaires routes
