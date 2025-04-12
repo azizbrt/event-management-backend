@@ -1,18 +1,23 @@
 import jwt from 'jsonwebtoken';
 
-export const generateTokenAndSetCookie = (res, userId, role) => {
-    const token = jwt.sign(
-        { userId, role },  // On ajoute le rôle dans le token
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' } // Expiration du token après 7 jours
-    );
+export const generateTokenAndSetCookie = (res, user) => {
+  // Create a payload that includes only the necessary info
+  const payload = {
+    userId: user._id,
+    name: user.name,  // Ensure user.name exists in the database
+    role: user.role
+  };
 
-    res.cookie("token", token, {
-        httpOnly: true,  // Empêche JavaScript d’accéder au cookie (protection contre les attaques XSS)
-        secure: process.env.NODE_ENV === 'production',  // Active le mode sécurisé en production (HTTPS)
-        maxAge: 7 * 24 * 60 * 60 * 1000,  // Expire après 7 jours
-        sameSite: "Strict",  // Protection contre les attaques CSRF
-    });
+  // Sign the token with your secret
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: '1d', // Token expires in 1 day
+  });
 
-    return token; // On retourne le token pour l’utiliser si nécessaire
+  // Set the token in a cookie (HTTP-only for security)
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Use secure cookie in production
+    sameSite: 'strict',
+    maxAge: 24 * 60 * 60 * 1000, // 1 day in milliseconds
+  });
 };

@@ -83,7 +83,7 @@ export const login = async (req, res) => {
     }
 
     // Générer le token et l'envoyer via un cookie
-    generateTokenAndSetCookie(res, user._id, user.role);
+    generateTokenAndSetCookie(res, user);
 
     // Mettre à jour la date de dernière connexion
     user.lastLogin = new Date();

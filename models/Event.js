@@ -8,22 +8,26 @@ const eventSchema = new mongoose.Schema(
     dateFin: { type: Date, required: true },
     typeEvenement: {
       type: String,
-      enum: ["en ligne", "physique"],
+      enum: ["enligne", "Presentiel", "hybride"],
       required: true,
     },
     lieu: { type: String },
     capacite: { type: Number, required: true },
-    categorieId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Categorie",
+    categorieName: {
+      type: String,
       required: true,
+      validate: {
+        validator: async function(name) {
+          const categorie = await mongoose.model('Categorie').findOne({ name });
+          return !!categorie;
+        },
+        message: props => `${props.value} is not a valid category name`
+      }
     },
-    lienInscription: { type: String },
     image: { type: String, required: true },
-    organisateurId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+    organisateur: {  // Changed from organisateurId to organisateur (name)
+      type: String,
+      required: true
     },
     etat: {
       type: String,
@@ -35,6 +39,18 @@ const eventSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+// Pre-save hook remains the same for category validation
+eventSchema.pre('save', async function(next) {
+  if (this.isModified('categorieName')) {
+    const categorie = await mongoose.model('Categorie').findOne({ name: this.categorieName });
+    if (!categorie) {
+      throw new Error(`Invalid category name: ${this.categorieName}`);
+    }
+  }
+  next();
+});
+
 const Event = mongoose.model("Event", eventSchema);
 
 export default Event;

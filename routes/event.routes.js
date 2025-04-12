@@ -9,7 +9,6 @@ const app = express();
 //create event
 app.post("/create",verifyToken,upload.single("image"), verifyRole("gestionnaire"),  createEvent);
 //Récupérer tous les événements
-
 app.get("/get",getAllEvents);
 //Récupérer un événement spécifique par ID
 app.get("/get/:id",verifyToken, getEventById);

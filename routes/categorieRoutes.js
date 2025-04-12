@@ -6,7 +6,7 @@ const app = express();
 //create a new categorie
 app.post("/create", verifyToken, verifyRole(["admin"]),createCategory);
 //get
-app.get("/get",verifyToken, verifyRole(["admin"]),getAllCategories);
+app.get("/get",verifyToken, verifyRole(["admin","gestionnaire"]),getAllCategories);
 //deletze
 app.delete("/delete/:id",verifyToken, verifyRole(["admin"]), deleteCategories);
 //modifay

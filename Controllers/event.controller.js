@@ -1,5 +1,4 @@
-import Event from "../models/Event.js";
-import mongoose from "mongoose";
+import Event from '../models/Event.js';
 
 export const createEvent = async (req, res) => {
   try {
@@ -11,33 +10,39 @@ export const createEvent = async (req, res) => {
       typeEvenement,
       lieu,
       capacite,
-      categorieId,
+      categorieName,
       lienInscription,
       tag,
       prix,
-      organisateurId,
     } = req.body;
 
-    const imageFile = req.file; 
+    // Get the image file from multer
+    const imageFile = req.file;
+    // Get the authenticated user's name or use a fallback (e.g., email)
+    const organisateur = req.user.name || req.user.email || "Organisateur inconnu";
+    console.log("✅ Utilisateur authentifié :", req.user);
 
-    if (
-      !titre ||
-      !description ||
-      !dateDebut ||
-      !dateFin ||
-      !typeEvenement ||
-      !lieu ||
-      !capacite ||
-      !categorieId ||
-      !organisateurId ||
-      !imageFile
-    ) {
+    // Validate that all required fields are provided
+    const requiredFields = [
+      titre,
+      description,
+      dateDebut,
+      dateFin,
+      typeEvenement,
+      lieu,
+      capacite,
+      categorieName,
+      imageFile,
+      organisateur,
+    ];
+    if (requiredFields.some((field) => !field)) {
       return res.status(400).json({
         success: false,
         message: "Remplis tous les champs obligatoires !",
       });
     }
 
+    // Validate dates: the end date must be after the start date
     if (new Date(dateFin) <= new Date(dateDebut)) {
       return res.status(400).json({
         success: false,
@@ -45,22 +50,25 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    if (typeEvenement === "physique" && lieu.startsWith("http")) {
+    // For physical events ("Présentiel"), ensure that the location is not a URL
+    if (typeEvenement === "Présentiel" && lieu.startsWith("http")) {
       return res.status(400).json({
         success: false,
-        message:
-          "Un événement physique doit avoir une adresse physique, pas un lien !",
+        message: "Un événement physique nécessite une adresse physique valide",
       });
     }
 
-    const evenementExiste = await Event.findOne({ titre, organisateurId });
-    if (evenementExiste) {
+    // Check whether an event with the same title already exists for this organizer
+    const existingEvent = await Event.findOne({ titre, organisateur });
+    if (existingEvent) {
       return res.status(409).json({
         success: false,
-        message: "Tu as déjà créé un événement avec ce titre !",
+        message: "Vous avez déjà créé un événement avec ce titre !",
       });
     }
 
+    // Create a new event. Note that we store the organizer’s name.
+    // Make sure that the typeEvenement matches one of the values in your model’s enum.
     const nouvelEvenement = new Event({
       titre,
       description,
@@ -69,31 +77,42 @@ export const createEvent = async (req, res) => {
       typeEvenement,
       lieu,
       capacite,
-      categorieId,
-      organisateurId,
+      categorieName,
+      organisateur, // Using the user's name (or fallback)
       lienInscription,
-      image: imageFile.filename, // ou imageFile.path selon config
-      tag,
+      image: imageFile.filename, // Use imageFile.path if necessary
+      tag: tag.split(",").map((t) => t.trim()), // Convert comma-separated string to an array
       prix,
       etat: "en attendant",
     });
 
     await nouvelEvenement.save();
 
-    res.status(201).json({
+    return res.status(201).json({
       success: true,
       message: "Événement créé avec succès ! En attente de validation.",
       event: nouvelEvenement,
     });
   } catch (error) {
     console.error("❌ Erreur lors de la création de l'événement :", error);
-    res.status(500).json({
+
+    // Handle category validation error specifically
+    if (error.message.includes("Invalid category name")) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Catégorie invalide - Veuillez choisir parmi les catégories existantes",
+      });
+    }
+
+    return res.status(500).json({
       success: false,
-      message: "Oups ! Quelque chose s'est mal passé...",
-      error: error.message,
+      message: "Erreur interne du serveur",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
     });
   }
 };
+
 
 export const getAllEvents = async (req, res) => {
   try {
@@ -249,20 +268,25 @@ export const updateEventState = async (req, res) => {
     });
   }
 };
+import mongoose from "mongoose";
+
 export const getEventsByGestionnaire = async (req, res) => {
   try {
     const { id } = req.params;
 
     // 1️⃣ Vérifier si l'ID est valide
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({
         success: false,
         message: "L'ID du gestionnaire est invalide !",
       });
     }
 
-    // 2️⃣ Récupérer les événements créés par ce gestionnaire
-    const events = await Event.find({ organisateurId: id });
+    // 2️⃣ Convertir l'ID en ObjectId
+    const gestionnaireId = new mongoose.Types.ObjectId(id);
+
+    // 3️⃣ Rechercher les événements associés
+    const events = await Event.find({ organisateurId: gestionnaireId });
 
     res.status(200).json({
       success: true,
@@ -279,6 +303,7 @@ export const getEventsByGestionnaire = async (req, res) => {
     });
   }
 };
+
 export const getEventById  = async (req,res)=>{
     try {
         const {id}=req.params;

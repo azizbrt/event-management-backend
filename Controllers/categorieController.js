@@ -48,19 +48,20 @@ export const createCategory = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
   try {
-    // Get all categories
-    const categories = await Categorie.find({ parent: null }).populate("subcategories"
-    );
+    // Get all categories without filtering by parent
+    const categories = await Categorie.find().populate("subcategories");
     res.status(200).json({
       message: "Categories retrieved successfully",
       categories,
     });
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error retrieving categories", error: error.message });
+    res.status(500).json({
+      message: "Error retrieving categories",
+      error: error.message,
+    });
   }
 };
+
 export const updatedCategories = async (req, res) => {
   try {
     const { id } = req.params; // Category or subcategory ID
