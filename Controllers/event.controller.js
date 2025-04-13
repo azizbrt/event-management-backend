@@ -268,29 +268,26 @@ export const updateEventState = async (req, res) => {
     });
   }
 };
-import mongoose from "mongoose";
 
-export const getEventsByGestionnaire = async (req, res) => {
+export const getEventsByOrganisateurNom = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { nom } = req.params;
 
-    // 1️⃣ Vérifier si l'ID est valide
-    if (!mongoose.Types.ObjectId.isValid(id)) {
+    if (!nom) {
       return res.status(400).json({
         success: false,
-        message: "L'ID du gestionnaire est invalide !",
+        message: "Le nom de l'organisateur est requis !",
       });
     }
 
-    // 2️⃣ Convertir l'ID en ObjectId
-    const gestionnaireId = new mongoose.Types.ObjectId(id);
-
-    // 3️⃣ Rechercher les événements associés
-    const events = await Event.find({ organisateurId: gestionnaireId });
+    // Recherche insensible à la casse
+    const events = await Event.find({
+      organisateur: { $regex: new RegExp(`^${nom}$`, "i") }
+    });
 
     res.status(200).json({
       success: true,
-      message: `Liste des événements créés par le gestionnaire ${id}`,
+      message: `Liste des événements créés par ${nom}`,
       total: events.length,
       events,
     });
@@ -298,11 +295,13 @@ export const getEventsByGestionnaire = async (req, res) => {
     console.error("❌ Erreur lors de la récupération des événements :", error);
     res.status(500).json({
       success: false,
-      message: "Oups! Quelque chose s'est mal passé...",
+      message: "Oups! Une erreur s'est produite...",
       error: error.message,
     });
   }
 };
+
+
 
 export const getEventById  = async (req,res)=>{
     try {

@@ -1,5 +1,5 @@
 import express from "express";
-import { createEvent, deleteEvent, getAllEvents, getEventById, getEventsByGestionnaire, getRandomEvents, updateEvent, updateEventState } from "../Controllers/event.controller.js";
+import { createEvent, deleteEvent, getAllEvents, getEventById, getEventsByOrganisateurNom, getRandomEvents, updateEvent, updateEventState } from "../Controllers/event.controller.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 import { verifyRole } from "../middleware/verifyRole.js";
 import upload from "../middleware/uploadMiddleware.js";
@@ -18,8 +18,8 @@ app.put("/update/:id", verifyToken, verifyRole("gestionnaire", "admin"), updateE
 app.delete("/delete/:id", verifyToken, verifyRole("gestionnaire", "admin"), deleteEvent);
 //verifier l'etat de l'evenement
 app.put("/etat/:id", verifyToken, verifyRole("admin"),updateEventState);
-app.get("/gestionnaire/:id", verifyToken, verifyRole("gestionnaire", "admin"), getEventsByGestionnaire)
-//recmmended events by category or tag
+app.get("/gestionnaire/:nom",verifyToken,verifyRole("gestionnaire", "admin"),getEventsByOrganisateurNom);
+  //recmmended events by category or tag
 app.get("/recommended", getRandomEvents);
 
 export default app;
