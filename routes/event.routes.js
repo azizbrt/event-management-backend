@@ -13,9 +13,9 @@ app.get("/get",getAllEvents);
 //Récupérer un événement spécifique par ID
 app.get("/get/:id",verifyToken, getEventById);
 //Modifier un événement spécifique par ID
-app.put("/update/:id", verifyToken, verifyRole("gestionnaire", "admin"), updateEvent);
+app.put("/update/:id", verifyToken, verifyRole(["gestionnaire", "admin"]), updateEvent);
 //Supprimer un événement spécifique par ID
-app.delete("/delete/:id", verifyToken, verifyRole("gestionnaire", "admin"), deleteEvent);
+app.delete("/delete/:id", verifyToken, verifyRole(["gestionnaire", "admin"]), deleteEvent);
 //verifier l'etat de l'evenement
 app.put("/etat/:id", verifyToken, verifyRole("admin"),updateEventState);
 app.get("/gestionnaire/:nom",verifyToken,verifyRole("gestionnaire", "admin"),getEventsByOrganisateurNom);

@@ -273,34 +273,43 @@ export const getEventsByOrganisateurNom = async (req, res) => {
   try {
     const { nom } = req.params;
 
+    // Basic check if name exists
     if (!nom) {
       return res.status(400).json({
         success: false,
-        message: "Le nom de l'organisateur est requis !",
+        message: "Organizer name is required!"
       });
     }
 
-    // Recherche insensible à la casse
+    // Find events (case-insensitive)
     const events = await Event.find({
-      organisateur: { $regex: new RegExp(`^${nom}$`, "i") }
+      organisateur: { $regex: new RegExp(nom, "i") }
     });
 
-    res.status(200).json({
+    // If no events found
+    if (events.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: `No events found for organizer: ${nom}`,
+        events: []
+      });
+    }
+
+    // If events found
+    return res.status(200).json({
       success: true,
-      message: `Liste des événements créés par ${nom}`,
-      total: events.length,
-      events,
+      message: `Events for ${nom}`,
+      events
     });
+
   } catch (error) {
-    console.error("❌ Erreur lors de la récupération des événements :", error);
-    res.status(500).json({
+    console.error("Error:", error);
+    return res.status(500).json({
       success: false,
-      message: "Oups! Une erreur s'est produite...",
-      error: error.message,
+      message: "Server error"
     });
   }
 };
-
 
 
 export const getEventById  = async (req,res)=>{
