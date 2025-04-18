@@ -6,37 +6,41 @@ import mongoose from "mongoose";
 
 export const inscrireUtilisateur = async (req, res) => {
   try {
-    const { evenementId } = req.body;  // ID de l'événement auquel l'utilisateur veut s'inscrire
-    const utilisateurId = req.user?.id; // ID de l'utilisateur qui essaie de s'inscrire
+    const { evenementId, note, telephone } = req.body;
+    const utilisateurId = req.user?.id;
 
     // 1. Vérifier si l'utilisateur est connecté
     if (!utilisateurId) {
-      return res
-        .status(401)
-        .json({ success: false, message: "❌ Vous devez être connecté pour vous inscrire !" });
+      return res.status(401).json({
+        success: false,
+        message: "❌ Vous devez être connecté pour vous inscrire !",
+      });
     }
 
     // 2. Vérifier si l'ID de l'événement est valide
     if (!mongoose.Types.ObjectId.isValid(evenementId)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "❌ L'ID de l'événement est invalide !" });
+      return res.status(400).json({
+        success: false,
+        message: "❌ L'ID de l'événement est invalide !",
+      });
     }
 
-    // 3. Récupérer l'événement et vérifier s'il existe
+    // 3. Vérifier si l'événement existe
     const event = await Event.findById(evenementId);
     if (!event) {
-      return res
-        .status(404)
-        .json({ success: false, message: "❌ Événement non trouvé !" });
+      return res.status(404).json({
+        success: false,
+        message: "❌ Événement non trouvé !",
+      });
     }
 
-    // 4. Vérifier si l'événement est déjà complet
+    // 4. Vérifier si l'événement est complet
     const inscriptionsCount = await Inscription.countDocuments({ evenementId });
     if (inscriptionsCount >= event.capacite) {
-      return res
-        .status(400)
-        .json({ success: false, message: "⚠️ L'événement est complet !" });
+      return res.status(400).json({
+        success: false,
+        message: "⚠️ L'événement est complet !",
+      });
     }
 
     // 5. Vérifier si l'utilisateur est déjà inscrit
@@ -44,7 +48,6 @@ export const inscrireUtilisateur = async (req, res) => {
       utilisateurId,
       evenementId,
     });
-
     if (inscriptionExistante) {
       return res.status(400).json({
         success: false,
@@ -52,25 +55,38 @@ export const inscrireUtilisateur = async (req, res) => {
       });
     }
 
-    // 6. Inscrire l'utilisateur à l'événement
+    // 6. Récupérer les infos utilisateur
+    const utilisateur = await User.findById(utilisateurId);
+    if (!utilisateur) {
+      return res.status(404).json({
+        success: false,
+        message: "❌ Utilisateur introuvable !",
+      });
+    }
+
+    if (!telephone) {
+      return res.status(400).json({
+        success: false,
+        message: "⚠️ Le numéro de téléphone est requis !",
+      });
+    }
+
+    // 7. Créer l'inscription
     const nouvelleInscription = new Inscription({
       utilisateurId,
       evenementId,
-      status: "en attente", // En attente de confirmation
+      telephone,
+      note,
+      utilisateurPublic: {
+        nom: utilisateur.name,
+        email: utilisateur.email,
+        telephone,
+      },
     });
 
     await nouvelleInscription.save();
 
-    // 7. Envoyer un email de confirmation à l'utilisateur
-    const utilisateur = await User.findById(utilisateurId);
-    if (!utilisateur || !utilisateur.email) {
-      return res.status(400).json({
-        success: false,
-        message: "❌ L'utilisateur n'a pas d'email enregistré !",
-      });
-    }
-
-    console.log(`📩 Envoi de l'email de confirmation à ${utilisateur.email}...`);
+    // 8. Envoyer un email de confirmation
     await sendInscriptionEmail(
       utilisateur.email,
       utilisateur.name,
@@ -78,18 +94,17 @@ export const inscrireUtilisateur = async (req, res) => {
       event.dateDebut
     );
 
-    // 8. Confirmer à l'utilisateur que l'inscription a réussi
+    // 9. Répondre avec succès
     res.status(201).json({
       success: true,
       message: "✅ Inscription réussie ! Un email de confirmation a été envoyé.",
       inscription: nouvelleInscription,
     });
   } catch (error) {
-    // En cas d'erreur, afficher un message d'erreur
     console.error("❌ Erreur lors de l'inscription :", error);
     res.status(500).json({
       success: false,
-      message: "❌ Une erreur s'est produite",
+      message: "❌ Une erreur s'est produite.",
       error: error.message,
     });
   }

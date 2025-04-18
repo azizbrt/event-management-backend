@@ -4,45 +4,67 @@ import slugify from "slugify";
 export const createCategory = async (req, res) => {
   try {
     const { name, description, parent } = req.body;
-    if (!name)
-      return res.status(400).json({ message: "Category name is required" });
-    // Check if category already exists
-    const existingCategory = await Categorie.findOne({ name });
-    if (existingCategory) {
-      return res.status(400).json({ message: "Category already exists" });
+    
+    // Validate required fields
+    if (!name) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Category name is required" 
+      });
     }
 
-    let parentCategory = null;
+    // Check for existing category (case insensitive)
+    const existingCategory = await Categorie.findOne({ 
+      name: { $regex: new RegExp(`^${name}$`, 'i') } 
+    });
+    
+    if (existingCategory) {
+      return res.status(400).json({
+        success: false,
+        message: "Category already exists"
+      });
+    }
 
+    // Validate parent category if provided
+    let parentCategory = null;
     if (parent) {
       parentCategory = await Categorie.findById(parent);
       if (!parentCategory) {
-        return res.status(404).json({ message: "Parent category not found" });
+        return res.status(404).json({
+          success: false,
+          message: "Parent category not found"
+        });
       }
     }
+
     // Create new category
     const newCategory = new Categorie({
       name,
-      description,
-      parent: parent || null,
+      description: description || "",
+      parent: parent || null
     });
 
     await newCategory.save();
 
-    // If it's a subcategory, add it to the parent's subcategories array
+    // Update parent category if this is a subcategory
     if (parentCategory) {
       parentCategory.subcategories.push(newCategory._id);
       await parentCategory.save();
     }
 
-    res.status(201).json({
+    return res.status(201).json({
+      success: true,
       message: "Category created successfully",
-      category: newCategory,
+      category: newCategory
     });
+
   } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error creating category", error: error.message });
+    console.error("Error creating category:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message
+    });
   }
 };
 
