@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Event from '../models/Event.js';
 
 export const createEvent = async (req, res) => {
@@ -18,8 +19,9 @@ export const createEvent = async (req, res) => {
 
     // Get the image file from multer
     const imageFile = req.file;
-    // Get the authenticated user's name or use a fallback (e.g., email)
-    const organisateur = req.user.name || req.user.email || "Organisateur inconnu";
+    
+    // Get the authenticated user's ID
+    const organisateur = req.user?.id; // Use `id` instead of `_id`
     console.log("✅ Utilisateur authentifié :", req.user);
 
     // Validate that all required fields are provided
@@ -51,7 +53,7 @@ export const createEvent = async (req, res) => {
     }
 
     // For physical events ("Présentiel"), ensure that the location is not a URL
-    if (typeEvenement === "Présentiel" && lieu.startsWith("http")) {
+    if (typeEvenement === "Presentiel" && lieu.startsWith("http")) {
       return res.status(400).json({
         success: false,
         message: "Un événement physique nécessite une adresse physique valide",
@@ -67,8 +69,7 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // Create a new event. Note that we store the organizer’s name.
-    // Make sure that the typeEvenement matches one of the values in your model’s enum.
+    // Create the new event
     const nouvelEvenement = new Event({
       titre,
       description,
@@ -78,25 +79,27 @@ export const createEvent = async (req, res) => {
       lieu,
       capacite,
       categorieName,
-      organisateur, // Using the user's name (or fallback)
+      organisateur,
       lienInscription,
-      image: imageFile.filename, // Use imageFile.path if necessary
-      tag: tag.split(",").map((t) => t.trim()), // Convert comma-separated string to an array
+      image: imageFile.filename,
+      tag: tag.split(",").map((t) => t.trim()),
       prix,
       etat: "en attendant",
     });
 
     await nouvelEvenement.save();
 
-    return res.status(201).json({
-      success: true,
-      message: "Événement créé avec succès ! En attente de validation.",
-      event: nouvelEvenement,
-    });
+// Populate the 'organisateur' field with name and email
+await nouvelEvenement.populate("organisateur", "name email");
+
+return res.status(201).json({
+  success: true,
+  message: "Événement créé avec succès ! En attente de validation.",
+  event: nouvelEvenement,
+});
+
   } catch (error) {
     console.error("❌ Erreur lors de la création de l'événement :", error);
-
-    // Handle category validation error specifically
     if (error.message.includes("Invalid category name")) {
       return res.status(400).json({
         success: false,
@@ -114,11 +117,11 @@ export const createEvent = async (req, res) => {
 };
 
 
+
 export const getAllEvents = async (req, res) => {
   try {
     // 📢 On prend tous les événements dans la base de données
-    const events = await Event.find();
-
+    const events = await Event.find().populate("organisateur", "name email");
     // ✅ On envoie la liste au frontend
     res.status(200).json({
       success: true,
@@ -269,47 +272,38 @@ export const updateEventState = async (req, res) => {
   }
 };
 
-export const getEventsByOrganisateurNom = async (req, res) => {
+export const getEventsByOrganisateurId = async (req, res) => {
   try {
-    const { nom } = req.params;
+    const { id } = req.params;
 
-    // Basic check if name exists
-    if (!nom) {
-      return res.status(400).json({
-        success: false,
-        message: "Organizer name is required!"
-      });
-    }
+    // Find events and populate organizer details
+    const events = await Event.find({ organisateur: id }).populate('organisateur', 'name');
 
-    // Find events (case-insensitive)
-    const events = await Event.find({
-      organisateur: { $regex: new RegExp(nom, "i") }
-    });
 
-    // If no events found
-    if (events.length === 0) {
+    if (!events.length) {
       return res.status(200).json({
         success: true,
-        message: `No events found for organizer: ${nom}`,
+        message: "No events found",
         events: []
       });
     }
 
-    // If events found
-    return res.status(200).json({
-      success: true,
-      message: `Events for ${nom}`,
-      events
-    });
+    // Format response to include organizer name
+    const formattedEvents = events.map(event => ({
+      ...event.toObject(),
+      organisateurName: event.organisateur.name // Add the name
+    }));
 
-  } catch (error) {
-    console.error("Error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Server error"
+    res.status(200).json({
+      success: true,
+      events: formattedEvents
     });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 
 export const getEventById  = async (req,res)=>{

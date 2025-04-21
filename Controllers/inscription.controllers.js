@@ -6,79 +6,80 @@ import mongoose from "mongoose";
 
 export const inscrireUtilisateur = async (req, res) => {
   try {
-    const { evenementId, note, telephone } = req.body;
+    const { evenementId, note, telephone, nomAffiché } = req.body;
     const utilisateurId = req.user?.id;
 
-    // 1. Vérifier si l'utilisateur est connecté
+    // 1. Vérifier l'authentification
     if (!utilisateurId) {
       return res.status(401).json({
         success: false,
-        message: "❌ Vous devez être connecté pour vous inscrire !",
+        message: "❌ Vous devez être connecté pour vous inscrire.",
       });
     }
 
-    // 2. Vérifier si l'ID de l'événement est valide
+    // 2. Vérifier l'ID de l'événement
     if (!mongoose.Types.ObjectId.isValid(evenementId)) {
       return res.status(400).json({
         success: false,
-        message: "❌ L'ID de l'événement est invalide !",
+        message: "❌ L'ID de l'événement est invalide.",
       });
     }
 
-    // 3. Vérifier si l'événement existe
+    // 3. Vérifier l'existence de l'événement
     const event = await Event.findById(evenementId);
     if (!event) {
       return res.status(404).json({
         success: false,
-        message: "❌ Événement non trouvé !",
+        message: "❌ Événement non trouvé.",
       });
     }
 
-    // 4. Vérifier si l'événement est complet
+    // 4. Vérifier la capacité
     const inscriptionsCount = await Inscription.countDocuments({ evenementId });
     if (inscriptionsCount >= event.capacite) {
       return res.status(400).json({
         success: false,
-        message: "⚠️ L'événement est complet !",
+        message: "⚠️ L'événement est complet.",
       });
     }
 
     // 5. Vérifier si l'utilisateur est déjà inscrit
-    const inscriptionExistante = await Inscription.findOne({
-      utilisateurId,
-      evenementId,
-    });
-    if (inscriptionExistante) {
+    const dejaInscrit = await Inscription.findOne({ utilisateurId, evenementId });
+    if (dejaInscrit) {
       return res.status(400).json({
         success: false,
-        message: "⚠️ Vous êtes déjà inscrit à cet événement !",
+        message: "⚠️ Vous êtes déjà inscrit à cet événement.",
       });
     }
 
-    // 6. Récupérer les infos utilisateur
+    // 6. Récupérer l'utilisateur
     const utilisateur = await User.findById(utilisateurId);
     if (!utilisateur) {
       return res.status(404).json({
         success: false,
-        message: "❌ Utilisateur introuvable !",
+        message: "❌ Utilisateur introuvable.",
       });
     }
 
+    // 7. Valider téléphone
     if (!telephone) {
       return res.status(400).json({
         success: false,
-        message: "⚠️ Le numéro de téléphone est requis !",
+        message: "⚠️ Le numéro de téléphone est requis.",
       });
     }
 
-    // 7. Créer l'inscription
+    // 8. Déterminer le nom à afficher
+    const nomPublic = nomAffiché?.trim() || utilisateur.name;
+
+    // 9. Créer l'inscription
     const nouvelleInscription = new Inscription({
       utilisateurId,
       evenementId,
       telephone,
       note,
       utilisateurPublic: {
-        nom: utilisateur.name,
+        nomAffiché: nomPublic,
         email: utilisateur.email,
         telephone,
       },
@@ -86,7 +87,7 @@ export const inscrireUtilisateur = async (req, res) => {
 
     await nouvelleInscription.save();
 
-    // 8. Envoyer un email de confirmation
+    // 10. Envoyer un email
     await sendInscriptionEmail(
       utilisateur.email,
       utilisateur.name,
@@ -94,7 +95,7 @@ export const inscrireUtilisateur = async (req, res) => {
       event.dateDebut
     );
 
-    // 9. Répondre avec succès
+    // 11. Réponse finale
     res.status(201).json({
       success: true,
       message: "✅ Inscription réussie ! Un email de confirmation a été envoyé.",
@@ -109,7 +110,6 @@ export const inscrireUtilisateur = async (req, res) => {
     });
   }
 };
-
 
 
 export const consulterInscriptions = async (req, res) => {

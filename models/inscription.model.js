@@ -3,39 +3,38 @@ import mongoose from "mongoose";
 const inscriptionSchema = new mongoose.Schema({
   utilisateurId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Link to the user who signed up
+    ref: "User", // Utilisateur inscrit
     required: true,
   },
   evenementId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Event", // Link to the event
+    ref: "Event", // Événement concerné
     required: true,
   },
   utilisateurPublic: {
-    nom: String,
-    email: String,
-    telephone: String
+    nomAffiché: { type: String, required: true }, // Nom affiché lors de l’inscription
+    email: { type: String },                      
+    telephone: { type: String },                  
   },
   note: {
-    type: String, 
+    type: String, // Note personnelle laissée lors de l’inscription
   },
   telephone: {
-    type: String, 
-    require: true,
-    // User phone (optional)
+    type: String,
+    required: true, // Téléphone personnel (obligatoire pour contact interne)
   },
   status: {
     type: String,
-    enum: ["en attente", "validée", "annulée"], // Pending, confirmed or cancelled
+    enum: ["en attente", "validée", "annulée"], // État de l’inscription
     default: "en attente",
   },
   dateInscription: {
     type: Date,
-    default: Date.now, // Automatically set when user signs up
+    default: Date.now, // Date automatique d’inscription
   },
 }, { timestamps: true });
 
-// Prevent same user from signing up to same event twice
+// Empêcher une double inscription du même utilisateur au même événement
 inscriptionSchema.index({ utilisateurId: 1, evenementId: 1 }, { unique: true });
 
 const Inscription = mongoose.model("Inscription", inscriptionSchema);

@@ -11,6 +11,7 @@ import inscriptionRoutes from "./routes/inscriptions.route.js";
 import commentaireRoutes from "./routes/commentaire.route.js";
 import adminRoutes from "./routes/admin.routes.js";
 import messageRoutes from "./routes/message.route.js";
+import paymentRoutes from "./routes/payment.routes.js";
 
 dotenv.config();
 
@@ -47,6 +48,8 @@ app.use("/api/commentaires", commentaireRoutes);
 app.use("/api/admin", adminRoutes);
 //message routes
 app.use("/api/message", messageRoutes);
+//payments routes
+app.use("/api/payments", paymentRoutes);
 
 app.get("/home", (req, res) => {
   return res
