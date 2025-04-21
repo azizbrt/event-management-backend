@@ -28,7 +28,7 @@
       organisateur: {  
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'User'  // This enables population
+        ref: 'User' 
       },
       etat: {
         type: String,

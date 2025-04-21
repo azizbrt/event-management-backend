@@ -1,5 +1,5 @@
 import express from "express";
-import { annulerInscription, consulterInscriptions, inscrireUtilisateur, supprimerInscription, validerInscription } from "../Controllers/inscription.controllers.js";
+import { annulerInscription, consulterInscriptions, consulterInscriptionsParticipant, inscrireUtilisateur, supprimerInscription, validerInscription } from "../Controllers/inscription.controllers.js";
 import { verifyRole } from "../middleware/verifyRole.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 
@@ -8,7 +8,9 @@ const app = express();
 //create inscription for the user
 app.post("/creeinscription",verifyToken, verifyRole(["participant"]), inscrireUtilisateur);
 //affichage les inscriptions 
-app.get("/get", verifyToken, verifyRole(["gestionnaire", "admin","participant"]), consulterInscriptions);
+app.get("/get", verifyToken, verifyRole(["gestionnaire"]), consulterInscriptions);
+//affichage inscription participant
+app.get("/getparticipant", verifyToken, verifyRole(["participant"]), consulterInscriptionsParticipant);
 //valider l'inscription
 app.put("/valider/:id",verifyToken, verifyRole(["gestionnaire"]),validerInscription);
 //annleree l'inscription por un gistionnaire
