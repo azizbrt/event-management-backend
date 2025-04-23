@@ -2,55 +2,68 @@ import mongoose from "mongoose";
 
 const paymentSchema = new mongoose.Schema(
   {
+    // 👤 Qui a payé
     utilisateurId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User", // 🔗 Qui a payé
+      ref: "User",
       required: true,
-    },
-    evenementId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Event", // 🔗 Pour quel événement
-      required: true,
-    },
-    inscriptionId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Inscription", // 🔗 S'il est inscrit (facultatif)
     },
 
-    // 👤 Copie figée des infos de l'utilisateur (pratique pour l'historique)
+    // 📅 Pour quel événement il a payé
+    evenementId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+      required: true,
+    },
+
+    // 📋 L’inscription liée (facultatif)
+    inscriptionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Inscription",
+      required: true,
+    },
+
+    // 👀 Juste une copie des infos visibles de l’utilisateur
     utilisateurPublic: {
       nom: { type: String },
       email: { type: String },
       telephone: { type: String },
     },
 
+    // 💰 Combien il a payé (le prix de l’événement)
     montant: {
       type: Number,
       required: true,
-      min: 0, // ❗Pas de montant négatif
+      min: 0,
     },
 
-    paymentMethode: {
+    // 🔢 Référence du paiement (générée automatiquement, unique)
+    reference: {
       type: String,
-      enum: ["virement"],
       required: true,
+      unique: true,
     },
 
+    // 🕒 Date du paiement (automatique)
+    datePaiement: {
+      type: Date,
+      default: () => new Date(),
+    },
+    preuvePaiement: {
+      type: String, // URL vers le fichier
+    },
 
+    // ⏳ Le statut du paiement
     statut: {
       type: String,
       enum: ["en attente", "validé", "refusé"],
-      default: "en attente", // ⏳ En cours jusqu'à vérification
-    },
-    datePaiement: {
-      type: Date,
-      default: () => new Date(), // 🕒 Prise automatiquement à la création
+      default: "en attente",
     },
   },
   { timestamps: true }
 );
 
-// 🚫 Empêcher un utilisateur de payer deux fois pour le même événement
+// 🚫 Empêcher qu’un utilisateur paye deux fois pour le même événement
 paymentSchema.index({ utilisateurId: 1, evenementId: 1 }, { unique: true });
 
 const Payment = mongoose.model("Payment", paymentSchema);

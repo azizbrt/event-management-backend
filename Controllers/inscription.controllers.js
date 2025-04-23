@@ -1,7 +1,10 @@
 import Inscription from "../models/inscription.model.js";
 import Event from "../models/Event.js";
 import User from "../models/user.model.js"; // Mets le bon chemin vers ton modèle
-import { sendInscriptionEmail, sendValidationEmail } from "../services/emailService.js";
+import {
+  sendInscriptionEmail,
+  sendValidationEmail,
+} from "../services/emailService.js";
 import mongoose from "mongoose";
 
 export const inscrireUtilisateur = async (req, res) => {
@@ -44,7 +47,10 @@ export const inscrireUtilisateur = async (req, res) => {
     }
 
     // 5. Vérifier si l'utilisateur est déjà inscrit
-    const dejaInscrit = await Inscription.findOne({ utilisateurId, evenementId });
+    const dejaInscrit = await Inscription.findOne({
+      utilisateurId,
+      evenementId,
+    });
     if (dejaInscrit) {
       return res.status(400).json({
         success: false,
@@ -98,7 +104,8 @@ export const inscrireUtilisateur = async (req, res) => {
     // 11. Réponse finale
     res.status(201).json({
       success: true,
-      message: "✅ Inscription réussie ! Un email de confirmation a été envoyé.",
+      message:
+        "✅ Inscription réussie ! Un email de confirmation a été envoyé.",
       inscription: nouvelleInscription,
     });
   } catch (error) {
@@ -110,8 +117,6 @@ export const inscrireUtilisateur = async (req, res) => {
     });
   }
 };
-
-
 
 // 🔍 Voir les inscriptions des événements d’un gestionnaire
 export const consulterInscriptions = async (req, res) => {
@@ -127,7 +132,9 @@ export const consulterInscriptions = async (req, res) => {
     }
 
     // 📋 Chercher les événements créés par ce gestionnaire
-    const mesEvenements = await Event.find({ organisateur: user.id }).select("_id");
+    const mesEvenements = await Event.find({ organisateur: user.id }).select(
+      "_id"
+    );
     const mesEvenementIds = mesEvenements.map((e) => e._id);
 
     // 📦 Chercher les inscriptions liées à ses événements
@@ -170,7 +177,6 @@ export const consulterInscriptions = async (req, res) => {
       total: inscriptions.length,
       inscriptions,
     });
-
   } catch (error) {
     console.error("❌ Erreur pendant la récupération :", error.message);
     res.status(500).json({
@@ -180,44 +186,45 @@ export const consulterInscriptions = async (req, res) => {
     });
   }
 };
-export const consulterInscriptionsParticipant= async (req,res) =>{
-  const user= req.user;
+export const consulterInscriptionsParticipant = async (req, res) => {
+  const user = req.user;
   try {
-    const mesInscriptions = await Inscription.find({utilisateurId: user.id
-    }).populate("evenementId","titre dateDebut DateFin");
-    if (mesInscriptions.length===0) {
-      return res.status(404).json({ message: "❌ Vous n'avez encore participé à aucun événement." });
-      
+    const mesInscriptions = await Inscription.find({
+      utilisateurId: user.id,
+    }).populate("evenementId", "titre dateDebut dateFin");
+    if (mesInscriptions.length === 0) {
+      return res.status(404).json({
+        message: "❌ Vous n'avez encore participé à aucun événement.",
+      });
     }
-    const inscriptions = mesInscriptions.map(inscription => ({
+    const inscriptions = mesInscriptions.map((inscription) => ({
       evenement: {
-      titre: inscription.evenementId?.titre || "Sans titre",
-      dateDebut: inscription.evenementId?.dateDebut,
-      dateFin: inscription.evenementId?.dateFin,
-    },
-    note: inscription.note || "",
-    status: inscription.status,
-    dateInscription: inscription.dateInscription,
-    }))
+        titre: inscription.evenementId?.titre || "Sans titre",
+        dateDebut: inscription.evenementId?.dateDebut,
+        dateFin: inscription.evenementId?.dateFin,
+      },
+      note: inscription.note || "",
+      status: inscription.status,
+      dateInscription: inscription.dateInscription,
+    }));
     res.status(200).json({
       success: true,
       message: "📋 Voici vos inscriptions",
       total: inscriptions.length,
       inscriptions,
-    }); 
-   } catch (error) {
-    console.error("❌ Erreur pendant la récupération des inscriptions :", error.message);
+    });
+  } catch (error) {
+    console.error(
+      "❌ Erreur pendant la récupération des inscriptions :",
+      error.message
+    );
     res.status(500).json({
       success: false,
       message: "❌ Une erreur s’est produite.",
       error: error.message,
     });
-    
   }
-}
-
-
-
+};
 
 export const validerInscription = async (req, res) => {
   try {
@@ -235,14 +242,18 @@ export const validerInscription = async (req, res) => {
     }
 
     // 🔍 Récupérer l'utilisateur inscrit
-    const utilisateur = await User.findById(inscription.utilisateurId).select("_id");
+    const utilisateur = await User.findById(inscription.utilisateurId).select(
+      "_id"
+    );
     if (!utilisateur) {
       return res.status(404).json({ message: "❌ Utilisateur introuvable !" });
     }
 
     // ⚠️ Vérifier les états de l'inscription
     if (inscription.status === "validée") {
-      return res.status(400).json({ message: "⚠️ Cette inscription est déjà validée !" });
+      return res
+        .status(400)
+        .json({ message: "⚠️ Cette inscription est déjà validée !" });
     }
 
     if (inscription.status === "annulée") {
@@ -273,17 +284,16 @@ export const validerInscription = async (req, res) => {
       message: "✅ Inscription validée avec succès !",
       inscription,
     });
-
   } catch (error) {
     console.error("❌ Erreur lors de la validation de l'inscription :", error);
     return res.status(500).json({
-      message: "❌ Une erreur s'est produite lors de la validation de l'inscription",
+      message:
+        "❌ Une erreur s'est produite lors de la validation de l'inscription",
       error: error.message,
     });
   }
 };
 
-  
 export const annulerInscription = async (req, res) => {
   try {
     const { id } = req.params;
@@ -327,12 +337,15 @@ export const annulerInscription = async (req, res) => {
         dateAnnulation: inscription.dateAnnulation,
       },
     });
-
   } catch (error) {
-    console.error("❌ Erreur lors de l'annulation de l'inscription :", error.message);
+    console.error(
+      "❌ Erreur lors de l'annulation de l'inscription :",
+      error.message
+    );
     return res.status(500).json({
       success: false,
-      message: "❌ Une erreur s'est produite lors de l'annulation de l'inscription",
+      message:
+        "❌ Une erreur s'est produite lors de l'annulation de l'inscription",
       error: error.message,
     });
   }
@@ -349,23 +362,19 @@ export const supprimerInscription = async (req, res) => {
     }
     //Vérifier si l'utilisateur est admin ou gestionnaire
     if (inscription.utilisateurId.toString() == utilisateur.id) {
-      return res
-        .status(403)
-        .json({
-          message: "�� Vous n'êtes pas autorisé à supprimer cette inscription!",
-        });
+      return res.status(403).json({
+        message: "�� Vous n'êtes pas autorisé à supprimer cette inscription!",
+      });
     }
     //Supprimer l'inscription
     await inscription.deleteOne();
     res.status(200).json({ message: "�� Inscription supprimée avec succès!" });
   } catch (error) {
     console.error("�� Erreur lors de la suppression de l'inscription :", error);
-    res
-      .status(500)
-      .json({
-        message:
-          "�� Une erreur s'est produite lors de la suppression de l'inscription",
-        error: error.message,
-      });
+    res.status(500).json({
+      message:
+        "�� Une erreur s'est produite lors de la suppression de l'inscription",
+      error: error.message,
+    });
   }
 };

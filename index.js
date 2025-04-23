@@ -51,6 +51,7 @@ app.use("/api/message", messageRoutes);
 //payments routes
 app.use("/api/payments", paymentRoutes);
 
+
 app.get("/home", (req, res) => {
   return res
     .status(200)
