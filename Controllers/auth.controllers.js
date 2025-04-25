@@ -56,7 +56,7 @@ export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Vérifier si l'utilisateur existe
+    // Step 1: Check if the user exists
     const user = await User.findOne({ email });
     if (!user) {
       return res
@@ -64,7 +64,7 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Utilisateur non trouvé." });
     }
 
-    // Vérifier le mot de passe
+    // Step 2: Check the password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res
@@ -72,7 +72,7 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Mot de passe incorrect." });
     }
 
-    // Vérifier si l'utilisateur a confirmé son email
+    // Step 3: Check if the user's email is verified
     if (!user.isVerified) {
       return res
         .status(401)
@@ -82,14 +82,33 @@ export const login = async (req, res) => {
         });
     }
 
-    // Générer le token et l'envoyer via un cookie
+    // Step 4: Check the user's account status (etatCompte)
+    if (user.etatCompte === "inactif") {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Votre compte est inactif. Veuillez contacter l'administration.",
+        });
+    }
+
+    if (user.etatCompte === "suspendu") {
+      return res
+        .status(403)
+        .json({
+          success: false,
+          message: "Votre compte a été suspendu. Veuillez contacter l'administration.",
+        });
+    }
+
+    // Step 5: Generate the token and set it in a cookie
     generateTokenAndSetCookie(res, user);
 
-    // Mettre à jour la date de dernière connexion
+    // Step 6: Update last login date
     user.lastLogin = new Date();
     await user.save();
 
-    // Réponse avec les infos de l'utilisateur (sans le mot de passe)
+    // Step 7: Return the user info (excluding password)
     res.status(200).json({
       success: true,
       message: "Vous êtes connecté !",
@@ -100,6 +119,7 @@ export const login = async (req, res) => {
         role: user.role,
         isVerified: user.isVerified,
         lastLogin: user.lastLogin,
+        etatCompte: user.etatCompte,  // Include account status in the response
       },
     });
   } catch (error) {
@@ -113,6 +133,7 @@ export const login = async (req, res) => {
       });
   }
 };
+
 
 export const logout = async (req, res) => {
   res.clearCookie("token");
