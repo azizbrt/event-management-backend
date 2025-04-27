@@ -130,6 +130,7 @@ export const createUser = async (req, res) => {
       email,
       password: hashedPassword,  // Saving the hidden password
       name,
+      role,
       verificationToken,  // Send this code to verify email
       verificationExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // Token expires in 24 hours
     });
@@ -156,11 +157,13 @@ export const createUser = async (req, res) => {
   }
 };
 export const updateUser = async (req, res) => {
-  const { name, email, password, role, etatCompte } = req.body; // Get the new data to update
+  const { name, email, password, role, etatCompte } = req.body;
+  const { id } = req.params; // 👈 récupère l'id correctement depuis l'URL
+  const currentUserId = req.user._id; // 👈 ID de l'utilisateur connecté (assuré par middleware d'authentification)
 
   try {
     // Step 1: Find the user by their ID
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(id); // 👈 utilise l'id récupéré
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -168,7 +171,15 @@ export const updateUser = async (req, res) => {
       });
     }
 
-    // Step 2: Validate the fields (if we need to)
+    // Step 2: Prevent the user from suspending their own account
+    if (etatCompte && id === currentUserId && etatCompte === "suspendu") {
+      return res.status(400).json({
+        success: false,
+        message: "Vous ne pouvez pas suspendre votre propre compte.",
+      });
+    }
+
+    // Step 3: Validate the fields
     if (email && email !== user.email) {
       const existingUser = await User.findOne({ email });
       if (existingUser) {
@@ -177,33 +188,33 @@ export const updateUser = async (req, res) => {
           message: "Cet email est déjà utilisé.",
         });
       }
-      user.email = email;  // Update the email
+      user.email = email;
     }
 
-    // Step 3: Validate etatCompte (if provided)
+    // Step 4: Validate etatCompte
     if (etatCompte && !["actif", "inactif", "suspendu"].includes(etatCompte)) {
       return res.status(400).json({
         success: false,
         message: "Valeur invalide pour etatCompte. Choisissez parmi 'actif', 'inactif' ou 'suspendu'.",
       });
     }
-    if (etatCompte) user.etatCompte = etatCompte; // Update the etatCompte if it's valid
+    if (etatCompte) user.etatCompte = etatCompte;
 
-    // Step 4: If password is provided, hash it before saving
+    // Step 5: Hash password if provided
     if (password) {
-      const salt = await bcrypt.genSalt(10);  // Create a new salt
-      user.password = await bcrypt.hash(password, salt);  // Hash the new password
+      const salt = await bcrypt.genSalt(10);
+      user.password = await bcrypt.hash(password, salt);
     }
 
-    // Step 5: Update other fields
+    // Step 6: Update other fields
     if (name) user.name = name;
     if (role) user.role = role;
 
-    // Step 6: Save the updated user
+    // Step 7: Save
     await user.save();
 
-    // Step 7: Respond with the updated user data (without the password!)
-    const { password: _, ...updatedUser } = user.toObject(); // Remove password from response
+    // Step 8: Send back updated user (without password)
+    const { password: _, ...updatedUser } = user.toObject();
     return res.status(200).json({
       success: true,
       message: "Utilisateur mis à jour avec succès.",
@@ -217,6 +228,8 @@ export const updateUser = async (req, res) => {
     });
   }
 };
+
+
 export const deleteUser = async (req, res) => {
   const userId = req.params.id;
 
@@ -258,24 +271,22 @@ export const deleteUser = async (req, res) => {
 // Controller to get users based on search query
 export const getAllUsersSearch = async (req, res) => {
   try {
-    // Get the search term from the request (default to empty string if not provided)
-    const search = req.query.search || "";
+    const search = req.query.search || ""; // Default to empty string if no search term
 
-    // Find users where name or email matches the search term (case-insensitive)
+    // Search for users by name or email (case-insensitive)
     const users = await User.find({
       $or: [
         { name: new RegExp(search, "i") }, // Search by name
         { email: new RegExp(search, "i") }, // Search by email
       ],
-    }).select("-password"); // Exclude password from the result
+    }).select("-password"); // Exclude password
 
-    // Send the list of users as a response
-    res.json(users);
+    res.json(users); // Return the found users
   } catch (err) {
-    // If there's an error, send a 500 status with the error message
-    res.status(500).json({ error: "Erreur serveur" });
+    res.status(500).json({ error: "Erreur serveur" }); // Handle server error
   }
 };
+
 
 
 

@@ -10,9 +10,6 @@ import {
   getTotalUsers, 
   totalInscriptions, 
   updateUser, 
-  
-  
-  
 } from '../Controllers/admin.controllers.js';
 import { verifyRole } from '../middleware/verifyRole.js';
 import { verifyToken } from '../middleware/verifyToken.js';
