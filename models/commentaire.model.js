@@ -1,51 +1,65 @@
 import mongoose from "mongoose";
-const commentaireSchema = new mongoose.Schema({
+
+const responseSchema = new mongoose.Schema({
+  utilisateurId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
+  },
+  contenu: {
+    type: String,
+    required: true,
+    trim: true,
+    minlength: 5,
+    maxlength: 500,
+  },
+  dateResponse: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+
+const commentaireSchema = new mongoose.Schema(
+  {
     utilisateurId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
-    evenementId:{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Event",
-        required: true,
+    evenementId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Event",
+      required: true,
     },
     contenu: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 5,
-        maxlength: 500,
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 5,
+      maxlength: 500,
     },
-    datecommentaire:{
-        type: Date,
-        default: Date.now,
+    note: {
+      type: Number,
+      min: 1,
+      max: 5,
     },
-    note:{
-        type: Number,
-        min: 1,
-        max: 5,
+    datecommentaire: {
+      type: Date,
+      default: Date.now,
     },
-    responses:[{
-        utilisateurId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-        contenu: {
-            type: String,
-            required: true,
-            trim: true,
-            minlength: 5,
-            maxlength: 500,
-        },
-        dateResponse:{
-            type: Date,
-            default: Date.now,
-        },  
-    }]
-},
-{ timestamps: true }
+    statut: {
+      type: String,
+      enum: ["visible", "masqué", "supprimé"],
+      default: "visible",
+    },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+    },
+    responses: [responseSchema],
+  },
+  { timestamps: true }
 );
 
 const Commentaire = mongoose.model("Commentaire", commentaireSchema);
