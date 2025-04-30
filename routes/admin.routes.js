@@ -5,6 +5,7 @@ import {
   getAllUsers, 
   getAllUsersSearch, 
   getDernieresInscriptions, 
+  getDerniersPaiements, 
   getEvenementsPopulaires, 
   getTotalEvents, 
   getTotalUsers, 
@@ -24,6 +25,7 @@ router.get("/total-inscription", verifyToken, verifyRole("admin"), totalInscript
 // Popular events and recent inscriptions
 router.get("/populaires", getEvenementsPopulaires);
 router.get("/dernier-inscription", verifyToken, verifyRole("admin"), getDernieresInscriptions);
+router.get("/dernier-payment", verifyToken, verifyRole("admin"), getDerniersPaiements);
 
 // Users routes
 router.get("/users", verifyToken, verifyRole("admin"), getAllUsers); // Consider pagination here

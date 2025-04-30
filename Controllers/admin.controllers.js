@@ -3,6 +3,7 @@ import Event from "../models/Event.js";
 import Inscription from "../models/inscription.model.js";
 import User from "../models/user.model.js"
 import { sendVerificationEmail } from "../services/emailService.js";
+import Payment from "../models/payment.model.js";
 
 
 export const getTotalUsers = async (req,res)=>{
@@ -73,6 +74,22 @@ export const getDernieresInscriptions  = async (req,res) =>{
     
   }
 }
+
+export const getDerniersPaiements = async (req, res) => {
+  try {
+    const paiements = await Payment.find()
+      .populate("utilisateurId", "name email")
+      .populate("evenementId", "titre dateDebut")
+      .sort({ datePaiement: -1 }) // trie par date du paiement
+      .limit(5);
+
+    res.status(200).json({ paiements });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erreur serveur lors du chargement des paiements" });
+  }
+};
+
 
 // 🧠 GET all users (excluding passwords)
 export const getAllUsers = async (req, res) => {
