@@ -28,7 +28,7 @@ export const getTotalEvents = async (req,res)=>{
 export const totalInscriptions  = async (req,res)=>{
     try {
         const totalinscription = await Inscription.countDocuments();
-        res.status(200).json({ totalinscription });
+        res.status(200).json({ totalInscriptions: totalinscription });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Server Error" });
