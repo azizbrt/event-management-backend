@@ -3,7 +3,7 @@ import jwt from 'jsonwebtoken';
 export const generateTokenAndSetCookie = (res, user) => {
   // Create a payload that includes only the necessary info
   const payload = {
-    userId: user._id,
+    id: user._id,
     name: user.name,  // Ensure user.name exists in the database
     role: user.role
   };

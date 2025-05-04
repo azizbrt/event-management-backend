@@ -11,7 +11,7 @@ export function verifyToken(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // Now decoded.userId, decoded.name, and decoded.role should have proper values.
     req.user = {
-      id: decoded.userId,
+      id: decoded.id,
       name: decoded.name,
       role: decoded.role,
     };
