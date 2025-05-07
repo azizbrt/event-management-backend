@@ -86,71 +86,29 @@ export const getAllCategories = async (req, res) => {
 
 export const updatedCategories = async (req, res) => {
   try {
-    const { id } = req.params; // Category or subcategory ID
-    const { name, description, parent } = req.body;
-    // Find the category/subcategory
-    const category = await Categorie.findById(id);
-    if (!category) {
-      return res.status(404).json({ message: "Category not found" });
+    const { id } = req.params;
+
+    // Extract only allowed fields
+    const updates = {};
+    if (req.body.name !== undefined) updates.name = req.body.name;
+    if (req.body.parent !== undefined) updates.parent = req.body.parent;
+
+    const updated = await Categorie.findByIdAndUpdate(
+      id,
+      updates,
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: "Catégorie introuvable" });
     }
 
-    // Check if the new name already exists (excluding the current category)
-    if (name && name !== category.name) {
-      const existingCategory = await Categorie.findOne({
-        name,
-        _id: { $ne: id },
-      });
-      if (existingCategory) {
-        return res
-          .status(400)
-          .json({ message: "Category name already exists" });
-      }
-    }
-
-    // If parent is changed, update old and new parent categories
-    if (parent && parent !== category.parent?.toString()) {
-      const oldParent = await Categorie.findById(category.parent);
-      const newParent = await Categorie.findById(parent);
-
-      if (!newParent) {
-        return res
-          .status(404)
-          .json({ message: "New parent category not found" });
-      }
-
-      // Remove from old parent's subcategories
-      if (oldParent) {
-        oldParent.subcategories = oldParent.subcategories.filter(
-          (subId) => subId.toString() !== id
-        );
-        await oldParent.save();
-      }
-
-      // Add to new parent's subcategories
-      newParent.subcategories.push(id);
-      await newParent.save();
-    }
-
-    // Update fields
-    if (name) {
-      category.name = name;
-      category.slug = slugify(name, { lower: true, strict: true });
-    }
-    if (description) category.description = description;
-    if (parent !== undefined) category.parent = parent;
-
-    await category.save();
-
-    res.status(200).json({
-      message: "Category updated successfully",
-      category,
-    });
-  } catch (error) {
-    res
-      .status(500)
-      .json({ message: "Error updating category", error: error.message });
+    res.status(200).json({ message: "Catégorie mise à jour", updated });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur", error: err.message });
   }
 };
+
 
 export const deleteCategories = async (req, res) => {
   try {
