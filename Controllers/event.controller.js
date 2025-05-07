@@ -15,16 +15,14 @@ export const createEvent = async (req, res) => {
       lienInscription,
       tag,
       prix,
+      restrictionAge, // ✅ New field
     } = req.body;
 
-    // Get the image file from multer
     const imageFile = req.file;
-    
-    // Get the authenticated user's ID
-    const organisateur = req.user?.id; // Use `id` instead of `_id`
+    const organisateur = req.user?.id;
+
     console.log("✅ Utilisateur authentifié :", req.user);
 
-    // Validate that all required fields are provided
     const requiredFields = [
       titre,
       description,
@@ -37,6 +35,7 @@ export const createEvent = async (req, res) => {
       imageFile,
       organisateur,
     ];
+
     if (requiredFields.some((field) => !field)) {
       return res.status(400).json({
         success: false,
@@ -44,7 +43,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // Validate dates: the end date must be after the start date
     if (new Date(dateFin) <= new Date(dateDebut)) {
       return res.status(400).json({
         success: false,
@@ -52,7 +50,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // For physical events ("Présentiel"), ensure that the location is not a URL
     if (typeEvenement === "Presentiel" && lieu.startsWith("http")) {
       return res.status(400).json({
         success: false,
@@ -60,7 +57,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // Check whether an event with the same title already exists for this organizer
     const existingEvent = await Event.findOne({ titre, organisateur });
     if (existingEvent) {
       return res.status(409).json({
@@ -69,7 +65,6 @@ export const createEvent = async (req, res) => {
       });
     }
 
-    // Create the new event
     const nouvelEvenement = new Event({
       titre,
       description,
@@ -79,27 +74,27 @@ export const createEvent = async (req, res) => {
       lieu,
       capacite,
       categorieName,
-      organisateur,
       lienInscription,
       image: imageFile.filename,
+      organisateur,
       tag: tag.split(",").map((t) => t.trim()),
       prix,
+      restrictionAge: restrictionAge || "tout public", // ✅ Use default if not sent
       etat: "en attendant",
     });
 
     await nouvelEvenement.save();
+    await nouvelEvenement.populate("organisateur", "name email");
 
-// Populate the 'organisateur' field with name and email
-await nouvelEvenement.populate("organisateur", "name email");
-
-return res.status(201).json({
-  success: true,
-  message: "Événement créé avec succès ! En attente de validation.",
-  event: nouvelEvenement,
-});
+    return res.status(201).json({
+      success: true,
+      message: "Événement créé avec succès ! En attente de validation.",
+      event: nouvelEvenement,
+    });
 
   } catch (error) {
     console.error("❌ Erreur lors de la création de l'événement :", error);
+
     if (error.message.includes("Invalid category name")) {
       return res.status(400).json({
         success: false,
@@ -115,6 +110,7 @@ return res.status(201).json({
     });
   }
 };
+
 
 
 
