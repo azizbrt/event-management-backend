@@ -59,7 +59,7 @@ eventSchema.pre("save", async function (next) {
   if (this.isModified("categorieName")) {
     const categorie = await mongoose.model("Categorie").findOne({ name: this.categorieName });
     if (!categorie) {
-      throw new Error(`Invalid category name: ${this.categorieName}`);
+      throw new Error(`Invalid category name: ${this.categorieName}`); 
     }
   }
   next();
