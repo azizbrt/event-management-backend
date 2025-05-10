@@ -198,6 +198,7 @@ export const consulterInscriptionsParticipant = async (req, res) => {
       });
     }
     const inscriptions = mesInscriptions.map((inscription) => ({
+      _id: inscription._id,
       evenement: {
         titre: inscription.evenementId?.titre || "Sans titre",
         dateDebut: inscription.evenementId?.dateDebut,
@@ -355,26 +356,30 @@ export const supprimerInscription = async (req, res) => {
   try {
     const utilisateur = req.user;
     const { id } = req.params;
-    //trouver l'inscription
+    console.log("ID reçu :", id);
+
+    // Vérification que l'ID est valide
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "ID invalide" });
+    }
+
+    // Trouver l'inscription
     const inscription = await Inscription.findById(id);
     if (!inscription) {
-      return res.status(404).json({ message: "�� Inscription introuvable !" });
+      return res.status(404).json({ message: "Inscription introuvable !" });
     }
-    //Vérifier si l'utilisateur est admin ou gestionnaire
-    if (inscription.utilisateurId.toString() == utilisateur.id) {
-      return res.status(403).json({
-        message: "�� Vous n'êtes pas autorisé à supprimer cette inscription!",
-      });
-    }
-    //Supprimer l'inscription
+
+    
+
+    // Supprimer l'inscription
     await inscription.deleteOne();
-    res.status(200).json({ message: "�� Inscription supprimée avec succès!" });
+    res.status(200).json({ message: "Inscription supprimée avec succès !" });
   } catch (error) {
-    console.error("�� Erreur lors de la suppression de l'inscription :", error);
+    console.error("Erreur lors de la suppression de l'inscription :", error);
     res.status(500).json({
-      message:
-        "�� Une erreur s'est produite lors de la suppression de l'inscription",
+      message: "Une erreur s'est produite lors de la suppression de l'inscription",
       error: error.message,
     });
   }
 };
+
