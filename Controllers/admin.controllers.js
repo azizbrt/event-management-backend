@@ -2,8 +2,8 @@ import bcrypt from "bcryptjs/dist/bcrypt.js";
 import Event from "../models/Event.js";
 import Inscription from "../models/inscription.model.js";
 import User from "../models/user.model.js"
-import { sendVerificationEmail } from "../services/emailService.js";
 import Payment from "../models/payment.model.js";
+import { sendGestionnaireVerificationEmail } from "../services/emailService.js";
 
 
 export const getTotalUsers = async (req,res)=>{
@@ -113,58 +113,82 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
+function generateStrongPassword(length = 12) {
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+  const allChars = uppercase + lowercase + digits;
+
+  const getRandom = (chars) => chars[Math.floor(Math.random() * chars.length)];
+
+  const password = [
+    getRandom(uppercase),
+    getRandom(lowercase),
+    getRandom(digits),
+  ];
+
+  while (password.length < length) {
+    password.push(getRandom(allChars));
+  }
+
+  return password.sort(() => Math.random() - 0.5).join('');
+}
+
+
+
+
 export const createUser = async (req, res) => {
-  // Getting the important information from the request body
-  const { email, name, password, role } = req.body;
+  const { email, name, role } = req.body;
 
   try {
-    // Step 1: Check if all fields are filled
-    if (!name || !email || !password) {
+    // 1. Validate required fields
+    if (!email || !name) {
       return res.status(400).json({
         success: false,
         message: "Veuillez remplir tous les champs obligatoires.",
       });
     }
 
-    // Step 2: Check if email already exists
+    // 2. Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(401).json({
+      return res.status(409).json({
         success: false,
         message: "Cet email est déjà utilisé.",
       });
     }
 
-    // Step 3: Hash the password before saving it to the database
-    const salt = await bcrypt.genSalt(10); // Salt is the secret mix
-    const hashedPassword = await bcrypt.hash(password, salt); // Hiding the password
+    // 3. Generate strong password
+    const plainPassword = generateStrongPassword();
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
-    // Step 4: Generate a verification token (secret code)
+    // 4. Generate verification code
     const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
-    
-    // Step 5: Create the new user with hashed password and verification info
+
+    // 5. Create user
     const user = new User({
       email,
-      password: hashedPassword,  // Saving the hidden password
       name,
       role,
-      verificationToken,  // Send this code to verify email
-      verificationExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // Token expires in 24 hours
+      password: hashedPassword,
+      verificationToken,
+      verificationExpiresAt: Date.now() + 24 * 60 * 60 * 1000, // 24h
     });
 
-    // Save the user to the database
     await user.save();
 
-    // Step 6: Send the verification email to the user
-    await sendVerificationEmail(user.email, user.name, verificationToken);
+    // 6. Send email with password and verification code
+    await sendGestionnaireVerificationEmail(email, name, verificationToken, plainPassword);
 
-    // Step 7: Respond with a success message (without the password!)
-    const { password: _, ...userWithoutPassword } = user.toObject();  // Remove password from response
+    // 7. Respond without password
+    const { password: _, ...userWithoutPassword } = user.toObject();
     return res.status(201).json({
       success: true,
       message: "Compte créé ! Vérifiez votre email.",
-      data: userWithoutPassword,  // Return everything except the password
+      data: userWithoutPassword,
     });
+
   } catch (error) {
     console.error("❌ Erreur création utilisateur:", error.message);
     return res.status(500).json({
@@ -173,6 +197,7 @@ export const createUser = async (req, res) => {
     });
   }
 };
+
 export const updateUser = async (req, res) => {
   const { name, email, password, role, etatCompte } = req.body;
   const { id } = req.params; // 👈 récupère l'id correctement depuis l'URL

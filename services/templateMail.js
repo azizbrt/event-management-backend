@@ -68,4 +68,25 @@ export const validationMailTemplate = (userName) => {
       </div>
   `;
 };
+export const gestionnaireVerificationTemplate = (userName, verificationCode, plainPassword) => `
+  <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; color: #333;">
+    <h2 style="color: #f97316;">Activation de votre compte</h2>
+    <p>Bonjour <strong>${userName}</strong>,</p>
+
+    <p>Votre compte  a été créé avec succès par l’administrateur.</p>
+
+    <p>Voici vos identifiants temporaires pour vous connecter :</p>
+
+    <div style="margin: 20px auto; text-align: left; display: inline-block; background: #f9f9f9; padding: 15px 20px; border-radius: 8px; border: 1px solid #ddd;">
+      <p><strong>Mot de passe :</strong> ${plainPassword}</p>
+      <p><strong>Code de vérification :</strong> <span style="font-size: 20px; font-weight: bold; color: #f97316;">${verificationCode}</span></p>
+    </div>
+
+    <p>⚠️ Ce code de vérification expirera dans 24 heures.</p>
+    
+    <p>Connectez-vous avec ces informations, puis suivez les instructions pour vérifier votre compte.</p>
+
+    <p style="margin-top: 30px; color: #777;">🚀 L’équipe Event Management</p>
+  </div>
+`;
 

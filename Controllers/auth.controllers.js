@@ -72,15 +72,7 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Mot de passe incorrect." });
     }
 
-    // Step 3: Check if the user's email is verified
-    if (!user.isVerified) {
-      return res
-        .status(401)
-        .json({
-          success: false,
-          message: "Veuillez vérifier votre email avant de vous connecter.",
-        });
-    }
+    
 
     // Step 4: Check the user's account status (etatCompte)
     if (user.etatCompte === "inactif") {
@@ -113,7 +105,7 @@ export const login = async (req, res) => {
       success: true,
       message: "Vous êtes connecté !",
       user: {
-        id: user._id,
+        id: user._id || user.id,
         name: user.name,
         email: user.email,
         role: user.role,
