@@ -337,18 +337,14 @@ export const getEventById  = async (req,res)=>{
         
     }
 }
-export const getTopAcceptedEvents = async (req, res) => {
+export const getRandomEvents = async (req, res) => {
   try {
-    const topAcceptedEvents = await Event.aggregate([
-      { $match: { etat: "accepter" } },
-      { $sort: { dateDebut: -1 } }, // Change this to another field if needed
-      { $limit: 5 },
-    ]);
-
-    res.json(topAcceptedEvents);
+    // This picks 5 random events from your collection
+    const randomEvents = await Event.aggregate([{ $sample: { size: 5 } }]);
+    res.json(randomEvents);
   } catch (error) {
-    console.error("Error fetching top accepted events:", error);
-    res.status(500).json({ message: "Erreur lors de la récupération des événements acceptés" });
+    console.error("Error fetching random events:", error);
+    res.status(500).json({ message: "Error fetching random events" });
   }
 };
 
