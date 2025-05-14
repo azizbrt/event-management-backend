@@ -54,17 +54,28 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// 🔎 Validate category name before saving
+// ✅ Validate category before saving
 eventSchema.pre("save", async function (next) {
   if (this.isModified("categorieName")) {
     const categorie = await mongoose.model("Categorie").findOne({ name: this.categorieName });
     if (!categorie) {
-      throw new Error(`Invalid category name: ${this.categorieName}`); 
+      throw new Error(`Invalid category name: ${this.categorieName}`);
     }
   }
   next();
 });
 
-const Event = mongoose.model("Event", eventSchema);
+// 🧹 Cascade delete inscriptions & comments when an event is deleted
+eventSchema.post("findOneAndDelete", async function (doc) {
+  if (doc) {
+    const eventId = doc._id;
 
+    await mongoose.model("Inscription").deleteMany({ evenement: eventId });
+    await mongoose.model("Commentaire").deleteMany({ event: eventId });
+
+    console.log(`🧹 Cascade deleted related inscriptions and comments for event ${eventId}`);
+  }
+});
+
+const Event = mongoose.model("Event", eventSchema);
 export default Event;

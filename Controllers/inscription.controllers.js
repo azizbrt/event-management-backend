@@ -94,12 +94,12 @@ export const inscrireUtilisateur = async (req, res) => {
     await nouvelleInscription.save();
 
     // 10. Envoyer un email
-    await sendInscriptionEmail(
-      utilisateur.email,
-      utilisateur.name,
-      event.titre,
-      event.dateDebut
-    );
+    // await sendInscriptionEmail(
+    //   utilisateur.email,
+    //   utilisateur.name,
+    //   event.titre,
+    //   event.dateDebut
+    // );
 
     // 11. Réponse finale
     res.status(201).json({

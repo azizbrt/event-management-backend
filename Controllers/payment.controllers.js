@@ -14,64 +14,71 @@ function getPublicUserInfo(user, inscription) {
 // POST /api/payments
 export const createPayment = async (req, res) => {
   try {
-    // 🎁 On prend les infos du corps de la requête (eventId et inscriptionId)
-    const { eventId, inscriptionId } = req.body;
+    const { inscriptionId } = req.body;
 
-    // 🧒 On récupère l'ID de la personne qui est connectée
+    if (!inscriptionId) {
+      return res.status(400).json({ message: "inscriptionId est requis." });
+    }
+
     const userId = req.user.id;
 
-    // ✅ 1. Vérifier si l'événement existe
-    const event = await Event.findById(eventId);
+    // 📋 1. Récupérer l'inscription
+    const inscription = await Inscription.findById(inscriptionId);
+    if (!inscription) {
+      return res.status(404).json({ message: "Inscription introuvable." });
+    }
+
+    // 🔒 2. Vérifier que l'utilisateur est bien le propriétaire
+    if (inscription.utilisateurId.toString() !== userId) {
+      return res.status(403).json({ message: "Accès refusé à cette inscription." });
+    }
+
+    // 📅 3. Charger l'événement
+    const event = await Event.findById(inscription.evenementId);
     if (!event) {
-      return res.status(404).json({ message: "Événement introuvable" });
+      return res.status(404).json({ message: "Événement introuvable." });
     }
 
-    // ✅ 2. Vérifier si l'utilisateur existe
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "Utilisateur introuvable" });
+    // 🚫 4. Vérifier qu’il n’a pas déjà payé
+    const paiementExistant = await Payment.findOne({
+      utilisateurId: userId,
+      evenementId: event._id,
+    });
+    if (paiementExistant) {
+      return res.status(409).json({ message: "Paiement déjà effectué pour cet événement." });
     }
 
-    // ✅ 3. Si on a donné un ID d'inscription, vérifier que c’est bien la sienne
-    let inscription = null;
-    if (inscriptionId) {
-      inscription = await Inscription.findById(inscriptionId);
-      const estProprio = inscription?.utilisateurId.toString() === userId;
-      if (!inscription || !estProprio) {
-        return res.status(400).json({ message: "Inscription invalide." });
-      }
-    }
-
-    // ✅ 4. Créer le paiement avec les infos visibles de l'utilisateur
+    // ✅ 5. Créer le paiement
     const newPayment = new Payment({
       utilisateurId: userId,
-      evenementId: eventId,
-      inscriptionId: inscriptionId || null,
-      utilisateurPublic: getPublicUserInfo(user, inscription),
-
-      montant: event.prix || 0,
+      evenementId: event._id,
+      inscriptionId: inscription._id,
+      utilisateurPublic: {
+        nom: inscription.utilisateurPublic.nomAffiché,
+        email: inscription.utilisateurPublic.email,
+        telephone: inscription.telephone,
+      },
+      montant: event.prix || 0, // ✅ Récupéré automatiquement ici
       statut: "en attente",
-      reference: uuidv4().slice(0, 8).toUpperCase(), // 🎫 Référence unique
+      reference: uuidv4().slice(0, 8).toUpperCase(),
     });
 
-    // ✅ 5. Enregistrer dans la base de données
     await newPayment.save();
 
-    // ✅ 6. Répondre avec succès
     return res.status(201).json({
-      message: "Paiement enregistré en attente.",
+      message: "Paiement enregistré avec succès.",
       paiment: newPayment,
     });
 
   } catch (error) {
-    // ❌ Si erreur, on affiche et on renvoie une réponse d’erreur
-    console.error("Error creating payment:", error);
+    console.error("Erreur lors de la création du paiement:", error);
     return res.status(500).json({
-      message: "Erreur lors de l'enregistrement du paiement.",
+      message: "Erreur serveur.",
       error: error.message,
     });
   }
 };
+
 export const getAllPaiementsWithDetails = async (req, res) => {
   try {
     const gestionnaireId = req.user.id;

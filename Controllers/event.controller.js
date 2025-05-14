@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 import Event from '../models/Event.js';
+import Inscription from '../models/inscription.model.js';
+import Payment from '../models/payment.model.js';
 
 export const createEvent = async (req, res) => {
   try {
@@ -176,11 +178,13 @@ export const updateEvent = async (req, res) => {
     });
   }
 };
+
+
 export const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1️⃣ Vérifier si l'ID est valide
+    // ✅ Vérifier si l'ID est un ObjectId valide
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
@@ -188,33 +192,44 @@ export const deleteEvent = async (req, res) => {
       });
     }
 
-    // 2️⃣ Vérifier si l'événement existe avant de le supprimer
-    const event = await Event.findById(id);
-    if (!event) {
+    // 🗑️ Supprimer l'événement
+    const deletedEvent = await Event.findByIdAndDelete(id);
+    if (!deletedEvent) {
       return res.status(404).json({
         success: false,
         message: "L'événement n'existe pas ou a déjà été supprimé !",
       });
     }
 
-    // 3️⃣ Supprimer l'événement
-    await Event.findByIdAndDelete(id);
+    // 🗑️ Supprimer les inscriptions liées à cet événement
+    const inscriptions = await Inscription.find({ eventId: id });
 
-    // 4️⃣ Envoyer une réponse de confirmation
+    const inscriptionIds = inscriptions.map((i) => i._id);
+
+    await Inscription.deleteMany({ eventId: id });
+
+    // 🗑️ Supprimer les paiements liés à ces inscriptions
+    await Payment.deleteMany({ inscriptionId: { $in: inscriptionIds } });
+
+    // 🔁 Ajouter ici d’autres suppressions si tu as des messages, commentaires, etc.
+    // await Message.deleteMany({ eventId: id });
+
+    // ✅ Réponse de succès
     res.status(200).json({
       success: true,
-      message: "Événement supprimé avec succès !",
-      event: event, // Retourner l'événement supprimé pour le frontend
+      message: "Événement et toutes les données associées supprimés avec succès.",
+      event: deletedEvent,
     });
   } catch (error) {
     console.error("❌ Erreur de suppression :", error);
     res.status(500).json({
       success: false,
-      message: "Oups ! Quelque chose s'est mal passé...",
+      message: "Erreur serveur lors de la suppression de l'événement.",
       error: error.message,
     });
   }
 };
+
 export const updateEventState = async (req, res) => {
   try {
     const { id } = req.params; // 📌 Récupérer l'ID de l'événement

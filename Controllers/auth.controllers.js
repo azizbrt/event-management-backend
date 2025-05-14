@@ -41,11 +41,22 @@ export const signup = async (req, res) => {
     });
 
     await user.save();
+    //jwt
+    generateTokenAndSetCookie(res, user);
 
     // Correction ici : passer arguments à sendVerificationEmail
     await sendVerificationEmail(user.email, user.name, verificationToken);
 
-    res.status(201).json({ message: "Compte créé ! Vérifiez votre email." });
+    res.status(201).json({
+      message: "Compte créé ! Vérifiez votre email.",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
+    });
   } catch (error) {
     console.error("Erreur lors de l'inscription :", error.message);
     res.status(500).json({ message: "Erreur d'inscription", error });
@@ -72,25 +83,21 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Mot de passe incorrect." });
     }
 
-    
-
     // Step 4: Check the user's account status (etatCompte)
     if (user.etatCompte === "inactif") {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Votre compte est inactif. Veuillez contacter l'administration.",
-        });
+      return res.status(403).json({
+        success: false,
+        message:
+          "Votre compte est inactif. Veuillez contacter l'administration.",
+      });
     }
 
     if (user.etatCompte === "suspendu") {
-      return res
-        .status(403)
-        .json({
-          success: false,
-          message: "Votre compte a été suspendu. Veuillez contacter l'administration.",
-        });
+      return res.status(403).json({
+        success: false,
+        message:
+          "Votre compte a été suspendu. Veuillez contacter l'administration.",
+      });
     }
 
     // Step 5: Generate the token and set it in a cookie
@@ -111,21 +118,18 @@ export const login = async (req, res) => {
         role: user.role,
         isVerified: user.isVerified,
         lastLogin: user.lastLogin,
-        etatCompte: user.etatCompte,  // Include account status in the response
+        etatCompte: user.etatCompte, // Include account status in the response
       },
     });
   } catch (error) {
     console.error("Erreur lors de la connexion :", error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        message: "Erreur lors de la connexion",
-        error: error.message,
-      });
+    res.status(500).json({
+      success: false,
+      message: "Erreur lors de la connexion",
+      error: error.message,
+    });
   }
 };
-
 
 export const logout = async (req, res) => {
   res.clearCookie("token");
@@ -165,9 +169,11 @@ export const verifyEmail = async (req, res) => {
 
     // Envoi de l'email de bienvenue
     await sendWelcomeEmail(user.email, user.name);
+    console.log("👤 User before token:", user);
+    console.log("📛 Name:", user.name, "| 🎭 Role:", user.role);
 
     // 🔐 Générer un token JWT et le stocker dans un cookie
-    generateTokenAndSetCookie(res, user._id);
+    generateTokenAndSetCookie(res, user);
 
     // Réponse avec succès sans mot de passe
     const { password, ...userData } = user._doc;
@@ -175,7 +181,13 @@ export const verifyEmail = async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Email vérifié avec succès.",
-      user: userData,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+      },
     });
   } catch (error) {
     console.error("Erreur lors de la vérification de l'email:", error);
@@ -214,11 +226,9 @@ export const forgotpassword = async (req, res) => {
 
     await sendPasswordResetEmail(user.email, user.name, resetToken);
 
-    res
-      .status(200)
-      .json({
-        message: "Un email de réinitialisation de mot de passe a été envoyé",
-      });
+    res.status(200).json({
+      message: "Un email de réinitialisation de mot de passe a été envoyé",
+    });
   } catch (error) {
     console.error("Erreur dans forgotpassword:", error);
     res.status(500).json({ success: false, message: error.message });
@@ -228,19 +238,17 @@ export const forgotpassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
   try {
     const { token } = req.params;
-    const { password: newPassword } = req.body; 
+    const { password: newPassword } = req.body;
 
-    console.log("Corps de la requête:", req.body); 
+    console.log("Corps de la requête:", req.body);
     console.log("token:", token);
     console.log("newPassword:", newPassword);
 
     if (!newPassword) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message: "Le nouveau mot de passe est requis !",
-        });
+      return res.status(400).json({
+        success: false,
+        message: "Le nouveau mot de passe est requis !",
+      });
     }
 
     // Vérification du token
@@ -250,13 +258,11 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res
-        .status(400)
-        .json({
-          success: false,
-          message:
-            "Token de réinitialisation de mot de passe expiré ou invalide.",
-        });
+      return res.status(400).json({
+        success: false,
+        message:
+          "Token de réinitialisation de mot de passe expiré ou invalide.",
+      });
     }
 
     // Mise à jour du mot de passe
@@ -297,12 +303,13 @@ export const checkAuth = async (req, res) => {
     }
 
     return res.status(200).json({ success: true, user });
-
   } catch (error) {
     console.error("❌ Erreur dans checkAuth:", error);
-    return res
-      .status(500)
-      .json({ success: false, message: "Erreur serveur", error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+      error: error.message,
+    });
   }
 };
 // ✅ Mise à jour du profil utilisateur
@@ -310,10 +317,12 @@ export const checkAuth = async (req, res) => {
 export const updateUserProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
-    console.log('Utilisateur trouvé dans la requête:', req.user);
+    console.log("Utilisateur trouvé dans la requête:", req.user);
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "Utilisateur non trouvé" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Utilisateur non trouvé" });
     }
 
     user.name = req.body.name || user.name;
@@ -345,10 +354,10 @@ export const updateUserProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("❌ Erreur dans updateUserProfile:", error);
-    return res.status(500).json({ success: false, message: "Erreur serveur", error: error.message });
+    return res.status(500).json({
+      success: false,
+      message: "Erreur serveur",
+      error: error.message,
+    });
   }
 };
-
-
-
-

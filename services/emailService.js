@@ -41,14 +41,14 @@ export const sendVerificationEmail = async (
 
     // Prepare the email content using the updated template
     const mailOptions = {
-      from: process.env.EMAIL_USER,
+      from: `"Event Team" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Vérification de votre compte",
       html: verificationMailTemplate(userName, verificationCode),
     };
 
-    await transporter.sendMail(mailOptions);
-    console.log(`📩 Email de vérification envoyé à ${email} !`);
+    const result = await transporter.sendMail(mailOptions);
+    console.log("Email send result:", result);
   } catch (error) {
     console.error(
       "❌ Erreur d'envoi de l'email de vérification :",
@@ -65,7 +65,9 @@ export const sendGestionnaireVerificationEmail = async (
 ) => {
   try {
     if (!verificationCode || !plainPassword) {
-      throw new Error("Le code de vérification ou le mot de passe est manquant !");
+      throw new Error(
+        "Le code de vérification ou le mot de passe est manquant !"
+      );
     }
 
     const transporter = nodemailer.createTransport({
@@ -80,14 +82,21 @@ export const sendGestionnaireVerificationEmail = async (
       from: `"Event Management" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "🔐 Vérification de votre compte",
-      html: gestionnaireVerificationTemplate(userName, verificationCode, plainPassword),
+      html: gestionnaireVerificationTemplate(
+        userName,
+        verificationCode,
+        plainPassword
+      ),
     };
 
     await transporter.sendMail(mailOptions);
 
     console.log(`📩 Email de vérification envoyé à ${email}`);
   } catch (error) {
-    console.error("❌ Erreur d'envoi de l'email de vérification :", error.message);
+    console.error(
+      "❌ Erreur d'envoi de l'email de vérification :",
+      error.message
+    );
     throw error;
   }
 };
