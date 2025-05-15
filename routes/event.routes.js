@@ -13,7 +13,7 @@ app.get("/get",getAllEvents);
 //Récupérer un événement spécifique par ID
 app.get("/get/:id",verifyToken, getEventById);
 //Modifier un événement spécifique par ID
-app.put("/update/:id", verifyToken, verifyRole(["gestionnaire", "admin"]), updateEvent);
+app.put("/update/:id", verifyToken, verifyRole(["gestionnaire", "admin"]),upload.single("image"), updateEvent);
 //Supprimer un événement spécifique par ID
 app.delete("/delete/:id", verifyToken, verifyRole(["gestionnaire", "admin"]), deleteEvent);
 //verifier l'etat de l'evenement

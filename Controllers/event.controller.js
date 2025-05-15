@@ -140,10 +140,8 @@ export const getAllEvents = async (req, res) => {
 
 export const updateEvent = async (req, res) => {
   try {
-    // 1️⃣ On récupère l'ID de l'événement depuis l'URL
     const { id } = req.params;
 
-    // 2️⃣ Vérifier si l'ID est valide
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
@@ -151,12 +149,17 @@ export const updateEvent = async (req, res) => {
       });
     }
 
-    // 3️⃣ Mettre à jour l'événement avec les nouvelles infos
-    const updatedEvent = await Event.findByIdAndUpdate(id, req.body, {
+    const updateFields = { ...req.body };
+
+    // Si une image a été envoyée
+    if (req.file) {
+      updateFields.image = req.file.filename;
+    }
+
+    const updatedEvent = await Event.findByIdAndUpdate(id, updateFields, {
       new: true,
     });
 
-    // 4️⃣ Vérifier si l'événement existe
     if (!updatedEvent) {
       return res.status(404).json({
         success: false,
@@ -164,20 +167,20 @@ export const updateEvent = async (req, res) => {
       });
     }
 
-    // 5️⃣ Envoyer la réponse
     res.status(200).json({
       success: true,
-      message: "Événement mis à jour avec succès !",
-      event: updatedEvent,
+      message: "Événement mis à jour avec succès",
+      data: updatedEvent,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
-      message: "Oups ! Quelque chose s'est mal passé...",
+      message: "Erreur serveur",
       error: error.message,
     });
   }
 };
+
 
 
 export const deleteEvent = async (req, res) => {
