@@ -19,7 +19,7 @@ import { verifyToken } from '../middleware/verifyToken.js';
 const router = express.Router();
 
 // Total counts
-router.get("/total-users", verifyToken, verifyRole("admin"), getTotalUsers);
+router.get("/total-users", verifyToken, verifyRole(["admin"]), getTotalUsers);
 router.get("/total-events", verifyToken, verifyRole("admin"), getTotalEvents);
 router.get("/total-inscription", verifyToken, verifyRole("admin"), totalInscriptions);
 

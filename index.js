@@ -12,6 +12,7 @@ import commentaireRoutes from "./routes/commentaire.route.js";
 import adminRoutes from "./routes/admin.routes.js";
 import messageRoutes from "./routes/message.route.js";
 import paymentRoutes from "./routes/payment.routes.js";
+import gestionnaireRoutes from "./routes/gestionnaire.routes.js";
 
 dotenv.config();
 
@@ -46,6 +47,8 @@ app.use("/api/inscription", inscriptionRoutes);
 app.use("/api/commentaires", commentaireRoutes);
 //admin routes
 app.use("/api/admin", adminRoutes);
+app.use("/api/gestionnaire", gestionnaireRoutes);
+
 //message routes
 app.use("/api/message", messageRoutes);
 //payments routes
