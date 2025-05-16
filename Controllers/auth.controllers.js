@@ -4,11 +4,11 @@ import crypto from "crypto";
 import {
   sendPasswordResetEmail,
   sendPasswordResetSuccessEmail,
+  sendVerificationEmail,
   sendWelcomeEmail,
 } from "../services/emailService.js";
 
 import { generateTokenAndSetCookie } from "../utils/generateTokenAndSetCookie.js";
-import { sendVerificationEmail } from "../services/emailService.js"; // Import correct de l'email service
 
 export const signup = async (req, res) => {
   const { email, password, name } = req.body;
