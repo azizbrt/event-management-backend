@@ -55,14 +55,14 @@ app.use("/api/payments", paymentRoutes);
 app.get("/home", (req, res) => {
   return res
     .status(200)
-    .json({ message: "ena jit mel backend ya sayed ooyyyy", success: true });
+    .json({ message: "hello from backend", success: true });
 });
 
 // Connexion à la base de données et démarrage du serveur
 connectDB()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`🚀 Server is running on port ${PORT}`);
+      console.log(` Server is running on port ${PORT}`);
     });
   })
   .catch((err) => console.log("❌ Could not start server:", err));

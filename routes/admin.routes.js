@@ -7,6 +7,7 @@ import {
   getDernieresInscriptions, 
   getDerniersPaiements, 
   getEvenementsPopulaires, 
+  getInscriptionsParMois, 
   getTotalEvents, 
   getTotalUsers, 
   totalInscriptions, 
@@ -22,10 +23,13 @@ router.get("/total-users", verifyToken, verifyRole("admin"), getTotalUsers);
 router.get("/total-events", verifyToken, verifyRole("admin"), getTotalEvents);
 router.get("/total-inscription", verifyToken, verifyRole("admin"), totalInscriptions);
 
+
 // Popular events and recent inscriptions
 router.get("/populaires", getEvenementsPopulaires);
 router.get("/dernier-inscription", verifyToken, verifyRole("admin"), getDernieresInscriptions);
 router.get("/dernier-payment", verifyToken, verifyRole("admin"), getDerniersPaiements);
+router.get("/inscriptions-par-mois",getInscriptionsParMois);
+
 
 // Users routes
 router.get("/users", verifyToken, verifyRole("admin"), getAllUsers); // Consider pagination here

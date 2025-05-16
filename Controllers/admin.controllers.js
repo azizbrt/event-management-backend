@@ -1,79 +1,75 @@
 import bcrypt from "bcryptjs/dist/bcrypt.js";
 import Event from "../models/Event.js";
 import Inscription from "../models/inscription.model.js";
-import User from "../models/user.model.js"
+import User from "../models/user.model.js";
 import Payment from "../models/payment.model.js";
 import { sendGestionnaireVerificationEmail } from "../services/emailService.js";
+import mongoose from "mongoose";
 
-
-export const getTotalUsers = async (req,res)=>{
-    try {
-        const totalUsers = await User.countDocuments();
-        res.status(200).json({ totalUsers });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Server Error" });
-        
-    }
-} 
-export const getTotalEvents = async (req,res)=>{
-    try {
-        const totalEvents = await Event.countDocuments();
-        res.status(200).json({ totalEvents });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Server Error" });
-        
-    }
-}
-export const totalInscriptions  = async (req,res)=>{
-    try {
-        const totalinscription = await Inscription.countDocuments();
-        res.status(200).json({ totalInscriptions: totalinscription });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Server Error" });
-        
-    }
-}
+export const getTotalUsers = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+    res.status(200).json({ totalUsers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+export const getTotalEvents = async (req, res) => {
+  try {
+    const totalEvents = await Event.countDocuments();
+    res.status(200).json({ totalEvents });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
+export const totalInscriptions = async (req, res) => {
+  try {
+    const totalinscription = await Inscription.countDocuments();
+    res.status(200).json({ totalInscriptions: totalinscription });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Server Error" });
+  }
+};
 export const getEvenementsPopulaires = async (req, res) => {
-    try {
-      const evenements = await Event.aggregate([
-        {
-          $lookup: {
-            from: "inscriptions", // Nom de la collection des inscriptions
-            localField: "_id",
-            foreignField: "evenementId",
-            as: "participants"
-          }
+  try {
+    const evenements = await Event.aggregate([
+      {
+        $lookup: {
+          from: "inscriptions", // Nom de la collection des inscriptions
+          localField: "_id",
+          foreignField: "evenementId",
+          as: "participants",
         },
-        {
-          $addFields: { nombreParticipants: { $size: "$participants" } }
-        },
-        { $sort: { nombreParticipants: -1 } }, // Trier par nombre de participants (descendant)
-        { $limit: 5 } // Limiter aux 5 événements les plus populaires
-      ]);
-  
-      res.status(200).json({ evenements });
-    } catch (error) {
-      console.error("Erreur récupération événements populaires :", error);
-      res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
-    }
-  };
-export const getDernieresInscriptions  = async (req,res) =>{
+      },
+      {
+        $addFields: { nombreParticipants: { $size: "$participants" } },
+      },
+      { $sort: { nombreParticipants: -1 } }, // Trier par nombre de participants (descendant)
+      { $limit: 5 }, // Limiter aux 5 événements les plus populaires
+    ]);
+
+    res.status(200).json({ evenements });
+  } catch (error) {
+    console.error("Erreur récupération événements populaires :", error);
+    res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
+  }
+};
+export const getDernieresInscriptions = async (req, res) => {
   try {
     const inscription = await Inscription.find()
-    .populate("utilisateurId","name email")
-    .populate("evenementId","title dateDebut")
-    .sort({ dateInscription: -1 })
-    .limit(5);
+      .populate("utilisateurId", "name email")
+      .populate("evenementId", "title dateDebut")
+      .sort({ dateInscription: -1 })
+      .limit(5);
     res.status(200).json({ inscription });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Server Error" });
-    
   }
-}
+};
 
 export const getDerniersPaiements = async (req, res) => {
   try {
@@ -86,10 +82,11 @@ export const getDerniersPaiements = async (req, res) => {
     res.status(200).json({ paiements });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: "Erreur serveur lors du chargement des paiements" });
+    res
+      .status(500)
+      .json({ error: "Erreur serveur lors du chargement des paiements" });
   }
 };
-
 
 // 🧠 GET all users (excluding passwords)
 export const getAllUsers = async (req, res) => {
@@ -131,11 +128,8 @@ function generateStrongPassword(length = 12) {
     password.push(getRandom(allChars));
   }
 
-  return password.sort(() => Math.random() - 0.5).join('');
+  return password.sort(() => Math.random() - 0.5).join("");
 }
-
-
-
 
 export const createUser = async (req, res) => {
   const { email, name, role } = req.body;
@@ -164,7 +158,9 @@ export const createUser = async (req, res) => {
     const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
     // 4. Generate verification code
-    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
+    const verificationToken = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
 
     // 5. Create user
     const user = new User({
@@ -179,7 +175,12 @@ export const createUser = async (req, res) => {
     await user.save();
 
     // 6. Send email with password and verification code
-    await sendGestionnaireVerificationEmail(email, name, verificationToken, plainPassword);
+    await sendGestionnaireVerificationEmail(
+      email,
+      name,
+      verificationToken,
+      plainPassword
+    );
 
     // 7. Respond without password
     const { password: _, ...userWithoutPassword } = user.toObject();
@@ -188,7 +189,6 @@ export const createUser = async (req, res) => {
       message: "Compte créé ! Vérifiez votre email.",
       data: userWithoutPassword,
     });
-
   } catch (error) {
     console.error("❌ Erreur création utilisateur:", error.message);
     return res.status(500).json({
@@ -237,7 +237,8 @@ export const updateUser = async (req, res) => {
     if (etatCompte && !["actif", "inactif", "suspendu"].includes(etatCompte)) {
       return res.status(400).json({
         success: false,
-        message: "Valeur invalide pour etatCompte. Choisissez parmi 'actif', 'inactif' ou 'suspendu'.",
+        message:
+          "Valeur invalide pour etatCompte. Choisissez parmi 'actif', 'inactif' ou 'suspendu'.",
       });
     }
     if (etatCompte) user.etatCompte = etatCompte;
@@ -271,7 +272,6 @@ export const updateUser = async (req, res) => {
   }
 };
 
-
 export const deleteUser = async (req, res) => {
   const userId = req.params.id;
 
@@ -300,9 +300,11 @@ export const deleteUser = async (req, res) => {
       success: true,
       message: "Utilisateur supprimé avec succès.",
     });
-
   } catch (error) {
-    console.error("❌ Erreur lors de la suppression de l'utilisateur :", error.message);
+    console.error(
+      "❌ Erreur lors de la suppression de l'utilisateur :",
+      error.message
+    );
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la suppression de l'utilisateur.",
@@ -329,9 +331,43 @@ export const getAllUsersSearch = async (req, res) => {
   }
 };
 
+export const getInscriptionsParMois = async (req, res) => {
+  try {
+    const stats = await Inscription.aggregate([
+      {
+        $match: {
+          dateInscription: { $ne: null },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: "%Y-%m",
+              date: "$dateInscription",
+            },
+          },
+          value: { $sum: 1 },
+        },
+      },
+      { $sort: { _id: 1 } },
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          value: 1,
+        },
+      },
+    ]);
+
+    res.json(stats);
+  } catch (error) {
+    console.error("Erreur dans getInscriptionsParMois:", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
 
 
 
 
-  
-  
+
