@@ -25,7 +25,7 @@ router.get("/total-inscription", verifyToken, verifyRole("admin"), totalInscript
 
 
 // Popular events and recent inscriptions
-router.get("/populaires", getEvenementsPopulaires);
+router.get("/evenement-populaire", getEvenementsPopulaires);
 router.get("/dernier-inscription", verifyToken, verifyRole("admin"), getDernieresInscriptions);
 router.get("/dernier-payment", verifyToken, verifyRole("admin"), getDerniersPaiements);
 router.get("/inscriptions-par-mois",getInscriptionsParMois);
