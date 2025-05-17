@@ -4,7 +4,30 @@ import Inscription from "../models/inscription.model.js";
 import User from "../models/user.model.js";
 import Payment from "../models/payment.model.js";
 import { sendGestionnaireVerificationEmail } from "../services/emailService.js";
-import mongoose from "mongoose";
+
+function generateStrongPassword(length = 12) {
+  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const lowercase = "abcdefghijklmnopqrstuvwxyz";
+  const digits = "0123456789";
+  const symbols = "!@#$%^&*()-_=+[]{}|;:,.<>?";
+  const allChars = uppercase + lowercase + digits + symbols;
+
+  const getRandom = (chars) => chars[Math.floor(Math.random() * chars.length)];
+
+  const password = [
+    getRandom(uppercase),
+    getRandom(lowercase),
+    getRandom(digits),
+    getRandom(symbols), // Ensure at least one symbol
+  ];
+
+  while (password.length < length) {
+    password.push(getRandom(allChars));
+  }
+
+  return password.sort(() => Math.random() - 0.5).join("");
+}
+
 
 export const getTotalUsers = async (req, res) => {
   try {
@@ -110,26 +133,7 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
-function generateStrongPassword(length = 12) {
-  const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const lowercase = "abcdefghijklmnopqrstuvwxyz";
-  const digits = "0123456789";
-  const allChars = uppercase + lowercase + digits;
 
-  const getRandom = (chars) => chars[Math.floor(Math.random() * chars.length)];
-
-  const password = [
-    getRandom(uppercase),
-    getRandom(lowercase),
-    getRandom(digits),
-  ];
-
-  while (password.length < length) {
-    password.push(getRandom(allChars));
-  }
-
-  return password.sort(() => Math.random() - 0.5).join("");
-}
 
 export const createUser = async (req, res) => {
   const { email, name, role } = req.body;

@@ -89,8 +89,8 @@ export const sendGestionnaireVerificationEmail = async (
       ),
     };
 
-    await transporter.sendMail(mailOptions);
-
+const result = await transporter.sendMail(mailOptions);
+    console.log("Email send result:", result);
     console.log(`📩 Email de vérification envoyé à ${email}`);
   } catch (error) {
     console.error(
