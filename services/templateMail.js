@@ -56,18 +56,39 @@ export const inscriptionMailTemplate = (userName, eventName, eventDate) => `
 `;
 export const validationMailTemplate = (userName) => {
   return `
-      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4;">
-          <div style="max-width: 600px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-              <h2 style="color: #FF9800; text-align: center;">🎉 Félicitations, ${userName} !</h2>
-              <p style="font-size: 16px; color: #333;">Votre inscription à l'événement a été validée avec succès.</p>
-              <p style="font-size: 16px; color: #333;">Nous sommes impatients de vous voir participer à notre événement !</p>
-              <hr style="border: none; border-top: 1px solid #ddd;">
-              <p style="font-size: 14px; color: #777;">Si vous avez des questions, n'hésitez pas à nous contacter.</p>
-              <p style="font-size: 14px; color: #777;">Merci et à bientôt !</p>
+    <div style="font-family: 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f4; padding: 40px;">
+      <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden;">
+        
+        <div style="background-color: #FF9800; padding: 20px; text-align: center;">
+          <h2 style="color: #fff; margin: 0;">🎉 Félicitations, ${userName} !</h2>
+        </div>
+        
+        <div style="padding: 30px;">
+          <p style="font-size: 18px; color: #333; line-height: 1.6;">
+            Votre inscription à l'événement a été <strong>validée avec succès</strong>.
+          </p>
+          <p style="font-size: 16px; color: #555; line-height: 1.6;">
+            Nous sommes impatients de vous voir parmi nous ! N'oubliez pas de noter la date de l'événement dans votre agenda 📅.
+          </p>
+          
+          <div style="margin-top: 30px; text-align: center;">
+            <a href="#" style="padding: 12px 24px; background-color: #FF9800; color: #fff; text-decoration: none; border-radius: 5px; font-size: 16px;">
+              Voir les détails de l'événement
+            </a>
           </div>
+          
+          <hr style="margin: 40px 0; border: none; border-top: 1px solid #eee;">
+          
+          <p style="font-size: 14px; color: #999; text-align: center;">
+            Si vous avez des questions, vous pouvez nous contacter à tout moment.<br>
+            Merci et à très bientôt !
+          </p>
+        </div>
       </div>
+    </div>
   `;
 };
+
 export const gestionnaireVerificationTemplate = (userName, verificationCode, plainPassword) => `
   <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; color: #333;">
     <h2 style="color: #f97316;">Activation de votre compte</h2>

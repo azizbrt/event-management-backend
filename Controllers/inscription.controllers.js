@@ -6,6 +6,7 @@ import {
   sendValidationEmail,
 } from "../services/emailService.js";
 import mongoose from "mongoose";
+import Payment from "../models/payment.model.js";
 
 export const inscrireUtilisateur = async (req, res) => {
   try {
@@ -191,7 +192,7 @@ export const consulterInscriptionsParticipant = async (req, res) => {
   try {
     const mesInscriptions = await Inscription.find({
       utilisateurId: user.id,
-    }).populate("evenementId", "titre dateDebut dateFin");
+    }).populate("evenementId", "titre dateDebut dateFin prix");
     if (mesInscriptions.length === 0) {
       return res.status(404).json({
         message: "❌ Vous n'avez encore participé à aucun événement.",
@@ -200,14 +201,17 @@ export const consulterInscriptionsParticipant = async (req, res) => {
     const inscriptions = mesInscriptions.map((inscription) => ({
       _id: inscription._id,
       evenement: {
+        id: inscription.evenementId?._id,
         titre: inscription.evenementId?.titre || "Sans titre",
         dateDebut: inscription.evenementId?.dateDebut,
         dateFin: inscription.evenementId?.dateFin,
+        prix: inscription.evenementId?.prix || 0,
       },
       note: inscription.note || "",
       status: inscription.status,
       dateInscription: inscription.dateInscription,
     }));
+
     res.status(200).json({
       success: true,
       message: "📋 Voici vos inscriptions",
@@ -231,30 +235,26 @@ export const validerInscription = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ✅ Vérification de la validité de l'ID
     if (!id || id === "undefined") {
       return res.status(400).json({ message: "❌ ID d'inscription invalide." });
     }
 
-    // 🔍 Vérifier si l'inscription existe
     const inscription = await Inscription.findById(id).populate("evenementId");
     if (!inscription) {
       return res.status(404).json({ message: "❌ Inscription introuvable !" });
     }
 
-    // 🔍 Récupérer l'utilisateur inscrit
     const utilisateur = await User.findById(inscription.utilisateurId).select(
-      "_id"
+      "name email"
     );
     if (!utilisateur) {
       return res.status(404).json({ message: "❌ Utilisateur introuvable !" });
     }
 
-    // ⚠️ Vérifier les états de l'inscription
     if (inscription.status === "validée") {
-      return res
-        .status(400)
-        .json({ message: "⚠️ Cette inscription est déjà validée !" });
+      return res.status(400).json({
+        message: "⚠️ Cette inscription est déjà validée !",
+      });
     }
 
     if (inscription.status === "annulée") {
@@ -263,19 +263,27 @@ export const validerInscription = async (req, res) => {
       });
     }
 
-    // ❗ Vérifier si l'événement existe encore
     if (!inscription.evenementId) {
       return res.status(400).json({
         message: "❌ L'événement associé à cette inscription n'existe plus !",
       });
     }
 
-    // ✅ Valider l'inscription
+    // 🧾 Étape CRITIQUE : Vérifier s’il y a un paiement pour cette inscription
+    const paiement = await Payment.findOne({ inscription: inscription._id });
+
+    if (!paiement) {
+      return res.status(400).json({
+        message: "❌ Aucun paiement trouvé pour cette inscription.",
+      });
+    }
+
+    // ✅ Valider l'inscription si paiement trouvé
     inscription.status = "validée";
     inscription.dateValidation = new Date();
     await inscription.save();
 
-    // ✉️ Envoyer un email de confirmation
+    // ✉️ Email de confirmation
     if (utilisateur.email) {
       await sendValidationEmail(utilisateur.email, utilisateur.name);
       console.log(`📩 Email de validation envoyé à ${utilisateur.email}`);
@@ -288,8 +296,7 @@ export const validerInscription = async (req, res) => {
   } catch (error) {
     console.error("❌ Erreur lors de la validation de l'inscription :", error);
     return res.status(500).json({
-      message:
-        "❌ Une erreur s'est produite lors de la validation de l'inscription",
+      message: "❌ Une erreur s'est produite lors de la validation.",
       error: error.message,
     });
   }
@@ -369,17 +376,15 @@ export const supprimerInscription = async (req, res) => {
       return res.status(404).json({ message: "Inscription introuvable !" });
     }
 
-    
-
     // Supprimer l'inscription
     await inscription.deleteOne();
     res.status(200).json({ message: "Inscription supprimée avec succès !" });
   } catch (error) {
     console.error("Erreur lors de la suppression de l'inscription :", error);
     res.status(500).json({
-      message: "Une erreur s'est produite lors de la suppression de l'inscription",
+      message:
+        "Une erreur s'est produite lors de la suppression de l'inscription",
       error: error.message,
     });
   }
 };
-

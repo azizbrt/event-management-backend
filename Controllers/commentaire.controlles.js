@@ -18,14 +18,6 @@ export const creerCommentaire = async (req, res) => {
       return res.status(404).json({ message: "❌ Événement introuvable !" });
     }
 
-    if (new Date() < new Date(evenement.dateFin)) {
-      return res
-        .status(400)
-        .json({
-          message: "⛔ Vous pouvez commenter après la fin de l’événement.",
-        });
-    }
-
     const commentaire = new Commentaire({
       utilisateurId,
       evenementId,
@@ -56,11 +48,9 @@ export const modifierCommentaire = async (req, res) => {
     }
 
     if (commentaire.utilisateurId.toString() !== utilisateurId) {
-      return res
-        .status(403)
-        .json({
-          message: "⛔ Vous ne pouvez modifier que vos propres commentaires !",
-        });
+      return res.status(403).json({
+        message: "⛔ Vous ne pouvez modifier que vos propres commentaires !",
+      });
     }
 
     const evenement = await Event.findById(commentaire.evenementId);
@@ -71,11 +61,9 @@ export const modifierCommentaire = async (req, res) => {
     }
 
     if (new Date() < new Date(evenement.dateFin)) {
-      return res
-        .status(400)
-        .json({
-          message: "⛔ Modification autorisée après la fin de l’événement.",
-        });
+      return res.status(400).json({
+        message: "⛔ Modification autorisée après la fin de l’événement.",
+      });
     }
 
     if (contenu?.trim()) commentaire.contenu = contenu.trim();
@@ -163,7 +151,9 @@ export const ajouterResponse = async (req, res) => {
 
     // Input validation
     if (!commentaireId || commentaireId === "undefined") {
-      return res.status(400).json({ message: "⛔ ID de commentaire invalide !" });
+      return res
+        .status(400)
+        .json({ message: "⛔ ID de commentaire invalide !" });
     }
     if (!contenu?.trim()) {
       return res.status(400).json({ message: "⛔ Contenu requis !" });
@@ -177,14 +167,14 @@ export const ajouterResponse = async (req, res) => {
           responses: {
             utilisateurId,
             contenu: contenu.trim(),
-            dateResponse: new Date()
-          }
-        }
+            dateResponse: new Date(),
+          },
+        },
       },
       { new: true }
     )
-    .populate("utilisateurId", "name")
-    .populate("responses.utilisateurId", "name"); // This is the key line!
+      .populate("utilisateurId", "name")
+      .populate("responses.utilisateurId", "name"); // This is the key line!
 
     if (!updatedComment) {
       return res.status(404).json({ message: "❌ Commentaire introuvable !" });
@@ -192,9 +182,8 @@ export const ajouterResponse = async (req, res) => {
 
     res.status(201).json({
       message: "✅ Réponse ajoutée avec succès!",
-      commentaire: updatedComment
+      commentaire: updatedComment,
     });
-
   } catch (error) {
     console.error("Erreur ajout réponse :", error);
     res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
@@ -208,7 +197,7 @@ export const supprimerReponse = async (req, res) => {
     }
 
     const commentaire = await Commentaire.findOneAndUpdate(
-      { "responses._id": reponseId },              // chercher le commentaire contenant la réponse
+      { "responses._id": reponseId }, // chercher le commentaire contenant la réponse
       { $pull: { responses: { _id: reponseId } } }, // supprimer la réponse du tableau
       { new: true }
     );
@@ -223,4 +212,3 @@ export const supprimerReponse = async (req, res) => {
     res.status(500).json({ message: "Erreur serveur" });
   }
 };
-
