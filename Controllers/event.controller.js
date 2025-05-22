@@ -199,11 +199,11 @@ export const deleteEvent = async (req, res) => {
     }
 
     // 🗑️ Supprimer les inscriptions liées à cet événement
-    const inscriptions = await Inscription.find({ eventId: id });
+    const inscriptions = await Inscription.find({ evenementId: id });
 
     const inscriptionIds = inscriptions.map((i) => i._id);
 
-    await Inscription.deleteMany({ eventId: id });
+    await Inscription.deleteMany({ evenementId: id });
 
     // 🗑️ Supprimer les paiements liés à ces inscriptions
     await Payment.deleteMany({ inscriptionId: { $in: inscriptionIds } });

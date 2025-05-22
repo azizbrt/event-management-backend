@@ -197,6 +197,58 @@ export const verifyEmail = async (req, res) => {
     });
   }
 };
+export const resendVerificationCode = async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    // 1. Trouver l'utilisateur par email
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucun utilisateur trouvé avec cet email.",
+      });
+    }
+
+    // 2. Vérifier s’il est déjà vérifié
+    if (user.isVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Cet utilisateur est déjà vérifié.",
+      });
+    }
+
+    // 3. Générer un nouveau code
+    const verificationToken = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+    const expiresIn = 10 * 60 * 1000; // 10 minutes
+
+    user.verificationToken = verificationToken;
+    user.verificationExpiresAt = Date.now() + expiresIn;
+
+    // 4. Sauvegarder les nouvelles infos
+    await user.save();
+
+    // 5. Envoyer le code par email
+    await sendVerificationEmail(user.email, user.name, verificationToken);
+
+    // 6. Répondre avec succès
+    res.status(200).json({
+      success: true,
+      message: "Nouveau code envoyé avec succès. Vérifie ton email !",
+    });
+
+  } catch (error) {
+    console.error("Erreur lors du renvoi du code :", error);
+    res.status(500).json({
+      success: false,
+      message: "Une erreur est survenue. Réessaie plus tard.",
+    });
+  }
+};
+
 
 export const forgotpassword = async (req, res) => {
   const { email } = req.body;
