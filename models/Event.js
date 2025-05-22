@@ -24,7 +24,7 @@ const eventSchema = new mongoose.Schema(
           const categorie = await mongoose.model("Categorie").findOne({ name });
           return !!categorie;
         },
-        message: props => `${props.value} is not a valid category name`,
+        message: (props) => `${props.value} is not a valid category name`,
       },
     },
 
@@ -54,10 +54,12 @@ const eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Validate category before saving
+// Validate category before saving
 eventSchema.pre("save", async function (next) {
   if (this.isModified("categorieName")) {
-    const categorie = await mongoose.model("Categorie").findOne({ name: this.categorieName });
+    const categorie = await mongoose
+      .model("Categorie")
+      .findOne({ name: this.categorieName });
     if (!categorie) {
       throw new Error(`Invalid category name: ${this.categorieName}`);
     }
@@ -73,7 +75,9 @@ eventSchema.post("findOneAndDelete", async function (doc) {
     await mongoose.model("Inscription").deleteMany({ evenement: eventId });
     await mongoose.model("Commentaire").deleteMany({ event: eventId });
 
-    console.log(`🧹 Cascade deleted related inscriptions and comments for event ${eventId}`);
+    console.log(
+      `🧹 Cascade deleted related inscriptions and comments for event ${eventId}`
+    );
   }
 });
 

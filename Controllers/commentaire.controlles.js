@@ -10,12 +10,12 @@ export const creerCommentaire = async (req, res) => {
     const { contenu } = req.body;
 
     if (!contenu?.trim()) {
-      return res.status(400).json({ message: "⛔ Le contenu est requis !" });
+      return res.status(400).json({ message: " Le contenu est requis !" });
     }
 
     const evenement = await Event.findById(evenementId);
     if (!evenement) {
-      return res.status(404).json({ message: "❌ Événement introuvable !" });
+      return res.status(404).json({ message: " Événement introuvable !" });
     }
 
     const commentaire = new Commentaire({
@@ -28,10 +28,10 @@ export const creerCommentaire = async (req, res) => {
     await commentaire.save();
     res
       .status(201)
-      .json({ message: "✅ Commentaire créé avec succès !", commentaire });
+      .json({ message: "Commentaire créé avec succès !", commentaire });
   } catch (error) {
     console.error("Erreur création commentaire :", error);
-    res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
+    res.status(500).json({ message: ` Erreur serveur : ${error.message}` });
   }
 };
 
@@ -44,12 +44,12 @@ export const modifierCommentaire = async (req, res) => {
 
     const commentaire = await Commentaire.findById(id);
     if (!commentaire) {
-      return res.status(404).json({ message: "❌ Commentaire introuvable !" });
+      return res.status(404).json({ message: " Commentaire introuvable !" });
     }
 
     if (commentaire.utilisateurId.toString() !== utilisateurId) {
       return res.status(403).json({
-        message: "⛔ Vous ne pouvez modifier que vos propres commentaires !",
+        message: " Vous ne pouvez modifier que vos propres commentaires !",
       });
     }
 
@@ -57,12 +57,12 @@ export const modifierCommentaire = async (req, res) => {
     if (!evenement) {
       return res
         .status(404)
-        .json({ message: "❌ Événement associé introuvable !" });
+        .json({ message: " Événement associé introuvable !" });
     }
 
     if (new Date() < new Date(evenement.dateFin)) {
       return res.status(400).json({
-        message: "⛔ Modification autorisée après la fin de l’événement.",
+        message: " Modification autorisée après la fin de l’événement.",
       });
     }
 
@@ -72,10 +72,10 @@ export const modifierCommentaire = async (req, res) => {
     await commentaire.save();
     res
       .status(200)
-      .json({ message: "✅ Commentaire modifié avec succès !", commentaire });
+      .json({ message: "Commentaire modifié avec succès !", commentaire });
   } catch (error) {
     console.error("Erreur modification commentaire :", error);
-    res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
+    res.status(500).json({ message: ` Erreur serveur : ${error.message}` });
   }
 };
 
@@ -87,14 +87,14 @@ export const supprimerCommentaire = async (req, res) => {
 
     const commentaire = await Commentaire.findById(id);
     if (!commentaire) {
-      return res.status(404).json({ message: "❌ Commentaire introuvable !" });
+      return res.status(404).json({ message: " Commentaire introuvable !" });
     }
 
     const evenement = await Event.findById(commentaire.evenementId);
     if (!evenement) {
       return res
         .status(404)
-        .json({ message: "❌ Événement associé introuvable !" });
+        .json({ message: " Événement associé introuvable !" });
     }
 
     if (
@@ -103,14 +103,14 @@ export const supprimerCommentaire = async (req, res) => {
     ) {
       return res
         .status(403)
-        .json({ message: "⛔ Non autorisé à supprimer ce commentaire." });
+        .json({ message: " Non autorisé à supprimer ce commentaire." });
     }
 
     await commentaire.deleteOne();
-    res.status(200).json({ message: "✅ Commentaire supprimé avec succès !" });
+    res.status(200).json({ message: "Commentaire supprimé avec succès !" });
   } catch (error) {
     console.error("Erreur suppression commentaire :", error);
-    res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
+    res.status(500).json({ message: ` Erreur serveur : ${error.message}` });
   }
 };
 
@@ -120,12 +120,12 @@ export const afficherCommentaires = async (req, res) => {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "❌ ID d'événement invalide !" });
+      return res.status(400).json({ message: " ID d'événement invalide !" });
     }
 
     const evenement = await Event.findById(id);
     if (!evenement) {
-      return res.status(404).json({ message: "❌ Événement introuvable !" });
+      return res.status(404).json({ message: " Événement introuvable !" });
     }
 
     const commentaires = await Commentaire.find({ evenementId: id })
@@ -138,7 +138,7 @@ export const afficherCommentaires = async (req, res) => {
       .json({ totalCommentaires: commentaires.length, commentaires });
   } catch (error) {
     console.error("Erreur affichage commentaires :", error);
-    res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
+    res.status(500).json({ message: ` Erreur serveur : ${error.message}` });
   }
 };
 
@@ -151,12 +151,10 @@ export const ajouterResponse = async (req, res) => {
 
     // Input validation
     if (!commentaireId || commentaireId === "undefined") {
-      return res
-        .status(400)
-        .json({ message: "⛔ ID de commentaire invalide !" });
+      return res.status(400).json({ message: " ID de commentaire invalide !" });
     }
     if (!contenu?.trim()) {
-      return res.status(400).json({ message: "⛔ Contenu requis !" });
+      return res.status(400).json({ message: " Contenu requis !" });
     }
 
     // Add the response directly with findByIdAndUpdate for better performance
@@ -177,16 +175,16 @@ export const ajouterResponse = async (req, res) => {
       .populate("responses.utilisateurId", "name"); // This is the key line!
 
     if (!updatedComment) {
-      return res.status(404).json({ message: "❌ Commentaire introuvable !" });
+      return res.status(404).json({ message: " Commentaire introuvable !" });
     }
 
     res.status(201).json({
-      message: "✅ Réponse ajoutée avec succès!",
+      message: "Réponse ajoutée avec succès!",
       commentaire: updatedComment,
     });
   } catch (error) {
     console.error("Erreur ajout réponse :", error);
-    res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
+    res.status(500).json({ message: ` Erreur serveur : ${error.message}` });
   }
 };
 export const supprimerReponse = async (req, res) => {

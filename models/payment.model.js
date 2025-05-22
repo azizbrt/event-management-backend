@@ -43,6 +43,11 @@ const paymentSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    // models/Payment.js
+    preuve: {
+      type: String, // URL ou nom de fichier
+      required: false,
+    },
 
     // 🕒 Date du paiement (automatique)
     datePaiement: {

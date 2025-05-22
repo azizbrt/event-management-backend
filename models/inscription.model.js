@@ -19,10 +19,6 @@ const inscriptionSchema = new mongoose.Schema({
   note: {
     type: String, // Note personnelle laissée lors de l’inscription
   },
-  telephone: {
-    type: String,
-    required: true, // Téléphone personnel (obligatoire pour contact interne)
-  },
   status: {
     type: String,
     enum: ["en attente", "validée", "annulée"], // État de l’inscription

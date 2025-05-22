@@ -1,7 +1,7 @@
-import mongoose from 'mongoose';
-import Event from '../models/Event.js';
-import Inscription from '../models/inscription.model.js';
-import Payment from '../models/payment.model.js';
+import mongoose from "mongoose";
+import Event from "../models/Event.js";
+import Inscription from "../models/inscription.model.js";
+import Payment from "../models/payment.model.js";
 
 export const createEvent = async (req, res) => {
   try {
@@ -17,13 +17,13 @@ export const createEvent = async (req, res) => {
       lienInscription,
       tag,
       prix,
-      restrictionAge, // ✅ New field
+      restrictionAge, // New field
     } = req.body;
 
     const imageFile = req.file;
     const organisateur = req.user?.id;
 
-    console.log("✅ Utilisateur authentifié :", req.user);
+    console.log("Utilisateur authentifié :", req.user);
 
     const requiredFields = [
       titre,
@@ -81,7 +81,7 @@ export const createEvent = async (req, res) => {
       organisateur,
       tag: tag.split(",").map((t) => t.trim()),
       prix,
-      restrictionAge: restrictionAge || "tout public", // ✅ Use default if not sent
+      restrictionAge: restrictionAge || "tout public", // Use default if not sent
       etat: "en attendant",
     });
 
@@ -93,9 +93,8 @@ export const createEvent = async (req, res) => {
       message: "Événement créé avec succès ! En attente de validation.",
       event: nouvelEvenement,
     });
-
   } catch (error) {
-    console.error("❌ Erreur lors de la création de l'événement :", error);
+    console.error(" Erreur lors de la création de l'événement :", error);
 
     if (error.message.includes("Invalid category name")) {
       return res.status(400).json({
@@ -113,14 +112,11 @@ export const createEvent = async (req, res) => {
   }
 };
 
-
-
-
 export const getAllEvents = async (req, res) => {
   try {
     // 📢 On prend tous les événements dans la base de données
     const events = await Event.find().populate("organisateur", "name email");
-    // ✅ On envoie la liste au frontend
+    // On envoie la liste au frontend
     res.status(200).json({
       success: true,
       message: "Tous les événements récupérés avec succès !",
@@ -128,7 +124,7 @@ export const getAllEvents = async (req, res) => {
       events, // 📄 La liste des événements
     });
   } catch (error) {
-    // ❌ Si ça ne marche pas, on affiche l'erreur
+    //  Si ça ne marche pas, on affiche l'erreur
     console.error("Erreur lors de la récupération des événements :", error);
     res.status(500).json({
       success: false,
@@ -181,13 +177,11 @@ export const updateEvent = async (req, res) => {
   }
 };
 
-
-
 export const deleteEvent = async (req, res) => {
   try {
     const { id } = req.params;
 
-    // ✅ Vérifier si l'ID est un ObjectId valide
+    // Vérifier si l'ID est un ObjectId valide
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({
         success: false,
@@ -217,14 +211,15 @@ export const deleteEvent = async (req, res) => {
     // 🔁 Ajouter ici d’autres suppressions si tu as des messages, commentaires, etc.
     // await Message.deleteMany({ eventId: id });
 
-    // ✅ Réponse de succès
+    // Réponse de succès
     res.status(200).json({
       success: true,
-      message: "Événement et toutes les données associées supprimés avec succès.",
+      message:
+        "Événement et toutes les données associées supprimés avec succès.",
       event: deletedEvent,
     });
   } catch (error) {
-    console.error("❌ Erreur de suppression :", error);
+    console.error(" Erreur de suppression :", error);
     res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la suppression de l'événement.",
@@ -238,7 +233,7 @@ export const updateEventState = async (req, res) => {
     const { id } = req.params; // 📌 Récupérer l'ID de l'événement
     const { etat } = req.body; // 📌 Récupérer le nouvel état
 
-    // ✅ Vérifier si l'état est valide
+    // Vérifier si l'état est valide
     const etatsAutorises = ["en attente", "accepter", "refusé"];
     if (!etatsAutorises.includes(etat)) {
       return res.status(400).json({
@@ -280,7 +275,7 @@ export const updateEventState = async (req, res) => {
     console.error(" Erreur lors de la mise à jour de l'état :", error);
     res.status(500).json({
       success: false,
-      message: "⚠️ Oups ! Quelque chose s'est mal passé...",
+      message: " Oups ! Quelque chose s'est mal passé...",
       error: error.message,
     });
   }
@@ -291,26 +286,28 @@ export const getEventsByOrganisateurId = async (req, res) => {
     const { id } = req.params;
 
     // Find events and populate organizer details
-    const events = await Event.find({ organisateur: id }).populate('organisateur', 'name');
-
+    const events = await Event.find({ organisateur: id }).populate(
+      "organisateur",
+      "name"
+    );
 
     if (!events.length) {
       return res.status(200).json({
         success: true,
         message: "No events found",
-        events: []
+        events: [],
       });
     }
 
     // Format response to include organizer name
-    const formattedEvents = events.map(event => ({
+    const formattedEvents = events.map((event) => ({
       ...event.toObject(),
-      organisateurName: event.organisateur.name // Add the name
+      organisateurName: event.organisateur.name, // Add the name
     }));
 
     res.status(200).json({
       success: true,
-      events: formattedEvents
+      events: formattedEvents,
     });
   } catch (error) {
     console.error(error);
@@ -318,43 +315,38 @@ export const getEventsByOrganisateurId = async (req, res) => {
   }
 };
 
-
-
-export const getEventById  = async (req,res)=>{
-    try {
-        const {id}=req.params;
-        if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-            return res.status(404).json({
-                success: false,
-                message: "L'ID fourni est invalide!",
-            })
-            
-        }
-        //recuperer l'evenement  par son ID
-        const event= await Event.findById(id);
-        //verifier si l'evenement existe
-        if (!event) {
-            return res.status(404).json({
-                success: false,
-                message: "Aucun événement trouvé avec cet ID!",
-            })
-            
-        }
-        res.status(200).json({
-            success: true,
-            message: "Événement trouvé avec succès!",
-            event,
-        }) 
-    } catch (error) {
-        console.error("Erreur lors de la récupération de l'événement :", error);
-        res.status(500).json({
-            success: false,
-            message: " Oups! Quelque chose s'est mal passé...",
-            error: error.message,
-        })
-        
+export const getEventById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(404).json({
+        success: false,
+        message: "L'ID fourni est invalide!",
+      });
     }
-}
+    //recuperer l'evenement  par son ID
+    const event = await Event.findById(id);
+    //verifier si l'evenement existe
+    if (!event) {
+      return res.status(404).json({
+        success: false,
+        message: "Aucun événement trouvé avec cet ID!",
+      });
+    }
+    res.status(200).json({
+      success: true,
+      message: "Événement trouvé avec succès!",
+      event,
+    });
+  } catch (error) {
+    console.error("Erreur lors de la récupération de l'événement :", error);
+    res.status(500).json({
+      success: false,
+      message: " Oups! Quelque chose s'est mal passé...",
+      error: error.message,
+    });
+  }
+};
 export const getRandomEvents = async (req, res) => {
   try {
     // This picks 5 random events from your collection
@@ -365,4 +357,3 @@ export const getRandomEvents = async (req, res) => {
     res.status(500).json({ message: "Error fetching random events" });
   }
 };
-

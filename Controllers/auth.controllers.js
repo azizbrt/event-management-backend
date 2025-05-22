@@ -150,7 +150,7 @@ export const verifyEmail = async (req, res) => {
       verificationToken: codeStr,
       verificationExpiresAt: { $gt: Date.now() },
     });
-    console.log("✅ Sans date, utilisateur trouvé ?", user);
+    console.log("Sans date, utilisateur trouvé ?", user);
     console.log("Utilisateur trouvé :", user); // 👈 Vérifie si un user est trouvé
 
     if (!user) {
@@ -286,7 +286,7 @@ export const resetPassword = async (req, res) => {
 };
 export const checkAuth = async (req, res) => {
   try {
-    const userId = req.user?.id; // ✅ récupère le userId injecté par le middleware
+    const userId = req.user?.id; // récupère le userId injecté par le middleware
 
     if (!userId) {
       return res
@@ -304,7 +304,7 @@ export const checkAuth = async (req, res) => {
 
     return res.status(200).json({ success: true, user });
   } catch (error) {
-    console.error("❌ Erreur dans checkAuth:", error);
+    console.error(" Erreur dans checkAuth:", error);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur",
@@ -312,7 +312,7 @@ export const checkAuth = async (req, res) => {
     });
   }
 };
-// ✅ Mise à jour du profil utilisateur
+// Mise à jour du profil utilisateur
 
 export const updateUserProfile = async (req, res) => {
   try {
@@ -353,7 +353,7 @@ export const updateUserProfile = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("❌ Erreur dans updateUserProfile:", error);
+    console.error(" Erreur dans updateUserProfile:", error);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur",

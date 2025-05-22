@@ -28,7 +28,6 @@ function generateStrongPassword(length = 12) {
   return password.sort(() => Math.random() - 0.5).join("");
 }
 
-
 export const getTotalUsers = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -77,7 +76,7 @@ export const getEvenementsPopulaires = async (req, res) => {
     res.status(200).json({ evenements });
   } catch (error) {
     console.error("Erreur récupération événements populaires :", error);
-    res.status(500).json({ message: `❌ Erreur serveur : ${error.message}` });
+    res.status(500).json({ message: ` Erreur serveur : ${error.message}` });
   }
 };
 export const getDernieresInscriptions = async (req, res) => {
@@ -117,14 +116,14 @@ export const getAllUsers = async (req, res) => {
     // 🔍 Fetch all users and exclude passwords
     const users = await User.find().select("-password");
 
-    // ✅ Send users with a 200 OK response
+    // Send users with a 200 OK response
     return res.status(200).json({
       success: true,
       count: users.length,
       data: users,
     });
   } catch (error) {
-    console.error("❌ Failed to fetch users:", error.message);
+    console.error(" Failed to fetch users:", error.message);
 
     // 🚨 Send a clear server error message
     return res.status(500).json({
@@ -133,7 +132,6 @@ export const getAllUsers = async (req, res) => {
     });
   }
 };
-
 
 export const createUser = async (req, res) => {
   const { email, name, role } = req.body;
@@ -194,7 +192,7 @@ export const createUser = async (req, res) => {
       data: userWithoutPassword,
     });
   } catch (error) {
-    console.error("❌ Erreur création utilisateur:", error.message);
+    console.error(" Erreur création utilisateur:", error.message);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la création de l'utilisateur.",
@@ -268,7 +266,7 @@ export const updateUser = async (req, res) => {
       data: updatedUser,
     });
   } catch (error) {
-    console.error("❌ Erreur mise à jour utilisateur:", error.message);
+    console.error(" Erreur mise à jour utilisateur:", error.message);
     return res.status(500).json({
       success: false,
       message: "Erreur serveur lors de la mise à jour de l'utilisateur.",
@@ -306,7 +304,7 @@ export const deleteUser = async (req, res) => {
     });
   } catch (error) {
     console.error(
-      "❌ Erreur lors de la suppression de l'utilisateur :",
+      " Erreur lors de la suppression de l'utilisateur :",
       error.message
     );
     return res.status(500).json({
@@ -370,8 +368,3 @@ export const getInscriptionsParMois = async (req, res) => {
     res.status(500).json({ error: "Erreur serveur" });
   }
 };
-
-
-
-
-

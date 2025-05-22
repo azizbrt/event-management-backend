@@ -11,7 +11,6 @@ export const verificationMailTemplate = (userName, verificationCode) => `
   </div>
 `;
 
-
 export const welcomeMailTemplate = (userName) => `
   <div style="font-family: Arial, sans-serif; text-align: center;">
     <h2 style="color: #FF9800;">Bienvenue ${userName} ! 🎉</h2>
@@ -33,7 +32,6 @@ export const passwordResetRequestTemplate = (userName, resetLink) => `
     <p style="margin-top: 20px; color: #777;">Si vous n'avez pas fait cette demande, ignorez cet email.</p>
   </div>
 `;
-
 
 export const passwordResetSuccessTemplate = (userName) => `
   <div style="font-family: Arial, sans-serif; text-align: center;">
@@ -89,7 +87,11 @@ export const validationMailTemplate = (userName) => {
   `;
 };
 
-export const gestionnaireVerificationTemplate = (userName, verificationCode, plainPassword) => `
+export const gestionnaireVerificationTemplate = (
+  userName,
+  verificationCode,
+  plainPassword
+) => `
   <div style="font-family: Arial, sans-serif; text-align: center; padding: 20px; color: #333;">
     <h2 style="color: #f97316;">Activation de votre compte</h2>
     <p>Bonjour <strong>${userName}</strong>,</p>
@@ -103,11 +105,10 @@ export const gestionnaireVerificationTemplate = (userName, verificationCode, pla
       <p><strong>Code de vérification :</strong> <span style="font-size: 20px; font-weight: bold; color: #f97316;">${verificationCode}</span></p>
     </div>
 
-    <p>⚠️ Ce code de vérification expirera dans 24 heures.</p>
+    <p> Ce code de vérification expirera dans 24 heures.</p>
     
     <p>Connectez-vous avec ces informations, puis suivez les instructions pour vérifier votre compte.</p>
 
     <p style="margin-top: 30px; color: #777;">🚀 L’équipe Event Management</p>
   </div>
 `;
-

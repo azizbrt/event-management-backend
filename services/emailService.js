@@ -51,7 +51,7 @@ export const sendVerificationEmail = async (
     console.log("Email send result:", result);
   } catch (error) {
     console.error(
-      "❌ Erreur d'envoi de l'email de vérification :",
+      " Erreur d'envoi de l'email de vérification :",
       error.message
     );
     throw error;
@@ -89,12 +89,12 @@ export const sendGestionnaireVerificationEmail = async (
       ),
     };
 
-const result = await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
     console.log("Email send result:", result);
     console.log(`📩 Email de vérification envoyé à ${email}`);
   } catch (error) {
     console.error(
-      "❌ Erreur d'envoi de l'email de vérification :",
+      " Erreur d'envoi de l'email de vérification :",
       error.message
     );
     throw error;
@@ -113,7 +113,7 @@ export const sendWelcomeEmail = async (email, userName) => {
     await transporter.sendMail(mailOptions);
     console.log(`📩 Email de bienvenue envoyé à ${email} avec succès !`);
   } catch (error) {
-    console.error("❌ Erreur d'envoi de l'email de bienvenue :", error.message);
+    console.error(" Erreur d'envoi de l'email de bienvenue :", error.message);
   }
 };
 
@@ -134,7 +134,7 @@ export const sendPasswordResetEmail = async (email, userName, resetToken) => {
     console.log(`📩 Email de réinitialisation envoyé à ${email} avec succès !`);
   } catch (error) {
     console.error(
-      "❌ Erreur d'envoi de l'email de réinitialisation :",
+      " Erreur d'envoi de l'email de réinitialisation :",
       error.message
     );
   }
@@ -155,7 +155,7 @@ export const sendPasswordResetSuccessEmail = async (email, userName) => {
     );
   } catch (error) {
     console.error(
-      "❌ Erreur d'envoi de l'email de confirmation :",
+      " Erreur d'envoi de l'email de confirmation :",
       error.message
     );
   }
@@ -167,11 +167,10 @@ export const sendInscriptionEmail = async (
   eventDate
 ) => {
   try {
-    if (!email) throw new Error("❌ L'adresse email est manquante !");
-    if (!userName) throw new Error("❌ Le nom d'utilisateur est manquant !");
-    if (!eventName) throw new Error("❌ Le nom de l'événement est manquant !");
-    if (!eventDate)
-      throw new Error("❌ La date de l'événement est manquante !");
+    if (!email) throw new Error(" L'adresse email est manquante !");
+    if (!userName) throw new Error(" Le nom d'utilisateur est manquant !");
+    if (!eventName) throw new Error(" Le nom de l'événement est manquant !");
+    if (!eventDate) throw new Error(" La date de l'événement est manquante !");
 
     console.log(`📧 Préparation de l'envoi d'email d'inscription à : ${email}`);
 
@@ -185,10 +184,7 @@ export const sendInscriptionEmail = async (
     await transporter.sendMail(mailOptions);
     console.log(`📩 Email de confirmation d'inscription envoyé à ${email} !`);
   } catch (error) {
-    console.error(
-      "❌ Erreur d'envoi de l'email d'inscription :",
-      error.message
-    );
+    console.error(" Erreur d'envoi de l'email d'inscription :", error.message);
   }
 };
 export const sendValidationEmail = async (email, userName) => {
@@ -203,9 +199,6 @@ export const sendValidationEmail = async (email, userName) => {
     await transporter.sendMail(mailOptions);
     console.log(`📩 Email de validation envoyé à ${email} avec succès !`);
   } catch (error) {
-    console.error(
-      "❌ Erreur d'envoi de l'email de validation :",
-      error.message
-    );
+    console.error(" Erreur d'envoi de l'email de validation :", error.message);
   }
 };
