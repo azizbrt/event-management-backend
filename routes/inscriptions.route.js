@@ -1,5 +1,5 @@
 import express from "express";
-import { annulerInscription, consulterInscriptions, consulterInscriptionsParticipant, inscrireUtilisateur, supprimerInscription, validerInscription } from "../Controllers/inscription.controllers.js";
+import { annulerInscription, consulterInscriptions, consulterInscriptionsParticipant, inscrireUtilisateur, supprimerInscription, supprimerInscriptionGestionnaire, validerInscription } from "../Controllers/inscription.controllers.js";
 import { verifyRole } from "../middleware/verifyRole.js";
 import { verifyToken } from "../middleware/verifyToken.js";
 
@@ -17,5 +17,6 @@ app.put("/valider/:id",verifyToken, verifyRole(["gestionnaire"]),validerInscript
 app.put("/annulee/:id",verifyToken, verifyRole(["gestionnaire"]),annulerInscription);
 //annuler une inscription pour participation
 app.delete("/annuleeinscription/:id",verifyToken,verifyRole(["participant"]),supprimerInscription) ;
+app.delete("/deleteinscription/:id",verifyToken,verifyRole(["gestionnaire"]),supprimerInscriptionGestionnaire) ;
 
 export default app;

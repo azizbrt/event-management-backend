@@ -112,3 +112,28 @@ export const gestionnaireVerificationTemplate = (
     <p style="margin-top: 30px; color: #777;">🚀 L’équipe Event Management</p>
   </div>
 `;
+const inscriptionCancelledTemplate = (userName, eventTitle, cause) => `
+  <div style="font-family: Arial, sans-serif; padding: 20px; color: #333">
+    <h2 style="color: #e63946;">Annulation de votre inscription</h2>
+    <p>Bonjour <strong>${userName}</strong>,</p>
+    <p>
+      Nous vous informons que votre inscription à l'événement
+      <strong>"${eventTitle}"</strong> a été <span style="color:#e63946;">annulée</span>.
+    </p>
+    <p>
+      <strong>Raison de l'annulation :</strong><br/>
+      <em>${cause}</em>
+    </p>
+    <p>
+      Si vous pensez qu’il s’agit d’une erreur ou si vous souhaitez plus d’informations, 
+      veuillez contacter le gestionnaire responsable de l’événement.
+    </p>
+    <p style="margin-top: 30px;">
+      Merci de votre compréhension,<br/>
+      <em>L’équipe de gestion des événements</em>
+    </p>
+  </div>
+`;
+
+export default inscriptionCancelledTemplate;
+

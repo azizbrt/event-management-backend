@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-import {
+import inscriptionCancelledTemplate, {
   verificationMailTemplate,
   welcomeMailTemplate,
   passwordResetRequestTemplate,
@@ -202,3 +202,20 @@ export const sendValidationEmail = async (email, userName) => {
     console.error(" Erreur d'envoi de l'email de validation :", error.message);
   }
 };
+
+export const sendInscriptionCancelled = async (email, userName, eventTitle, cause) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Votre inscription a été annulée",
+      html: inscriptionCancelledTemplate(userName, eventTitle, cause),
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`📩 Email d'annulation envoyé à ${email}`);
+  } catch (error) {
+    console.error("❌ Erreur envoi email annulation :", error.message);
+  }
+};
+

@@ -2,11 +2,21 @@ import Inscription from "../models/inscription.model.js";
 import Event from "../models/Event.js";
 import User from "../models/user.model.js"; // Mets le bon chemin vers ton modèle
 import {
+  sendInscriptionCancelled,
   sendInscriptionEmail,
   sendValidationEmail,
 } from "../services/emailService.js";
 import mongoose from "mongoose";
 import Payment from "../models/payment.model.js";
+// Liste de causes acceptées
+const causesAutorisees = [
+  "Paiement non reçu",
+  "Demande du participant",
+  "Erreur de saisie",
+  "Nombre maximum atteint",
+  "Problème technique",
+  "Autre",
+];
 
 export const inscrireUtilisateur = async (req, res) => {
   try {
@@ -142,7 +152,7 @@ export const consulterInscriptions = async (req, res) => {
       evenementId: { $in: evenementIds },
     })
       .populate("utilisateurId", "nomAffiché email telephone") // on veut les infos du participant
-      .populate("evenementId", "titre dateDebut dateFin"); // on veut les infos de l’événement
+      .populate("evenementId", "titre dateDebut dateFin prix"); // on veut les infos de l’événement
 
     // 💳 Pour chaque inscription, on va chercher le paiement (s'il existe)
     const result = await Promise.all(
@@ -163,6 +173,7 @@ export const consulterInscriptions = async (req, res) => {
             titre: inscription.evenementId?.titre || "Sans titre",
             dateDebut: inscription.evenementId?.dateDebut,
             dateFin: inscription.evenementId?.dateFin,
+            prix: inscription.evenementId?.prix || 0, // 👈 Add this line
           },
           note: inscription.note || "",
           status: inscription.status,
@@ -251,97 +262,90 @@ export const consulterInscriptionsParticipant = async (req, res) => {
 export const validerInscription = async (req, res) => {
   try {
     const id = req.params.id || req.body.id;
-    // 👉 Vérifie si l'ID est bien fourni
+
+    // 📌 Vérifie si l'ID est donné
     if (!id || id === "undefined") {
-      return res.status(400).json({ message: " ID d'inscription invalide." });
+      return res.status(400).json({ message: "ID d'inscription invalide." });
     }
 
-    // 🔍 Cherche l'inscription par son ID et récupère aussi l'événement lié
+    // 🔍 Cherche l'inscription et l'événement lié
     const inscription = await Inscription.findById(id).populate("evenementId");
-
     if (!inscription) {
-      return res.status(404).json({ message: " Inscription introuvable !" });
+      return res.status(404).json({ message: "Inscription introuvable !" });
     }
 
-    // 🔍 Cherche l'utilisateur lié à cette inscription
-    const utilisateur = await User.findById(inscription.utilisateurId).select(
-      "name email"
-    );
-
+    // 👤 Cherche l'utilisateur concerné
+    const utilisateur = await User.findById(inscription.utilisateurId).select("name email");
     if (!utilisateur) {
-      return res.status(404).json({ message: " Utilisateur introuvable !" });
+      return res.status(404).json({ message: "Utilisateur introuvable !" });
     }
 
-    //  Si déjà validée, on arrête
+    // ⛔ Si déjà validée ou annulée → on arrête
     if (inscription.status === "validée") {
-      return res
-        .status(400)
-        .json({ message: " Cette inscription est déjà validée !" });
+      return res.status(400).json({ message: "Cette inscription est déjà validée !" });
     }
-
-    //  Si annulée, on ne peut pas valider
     if (inscription.status === "annulée") {
-      return res.status(400).json({
-        message: "Impossible de valider une inscription annulée !",
-      });
+      return res.status(400).json({ message: "Impossible de valider une inscription annulée !" });
     }
 
-    //  Si l'événement n'existe plus, on arrête
+    // ❌ Si l'événement n'existe plus
     if (!inscription.evenementId) {
-      return res
-        .status(400)
-        .json({ message: "L'événement associé n'existe plus !" });
+      return res.status(400).json({ message: "L'événement associé n'existe plus !" });
     }
 
-    // 🧾 On cherche le paiement associé à cette inscription
-    const paiement = await Payment.findOne({
-      inscriptionId: new mongoose.Types.ObjectId(inscription._id),
-    });
+    // 💰 On vérifie s’il faut un paiement
+    const eventPrice = inscription.evenementId.prix;
 
-    //  Aucun paiement trouvé
-    if (!paiement) {
-      return res
-        .status(400)
-        .json({ message: " Aucun paiement trouvé pour cette inscription." });
-    }
-
-    //  Paiement annulé → pas possible de valider
-    if (paiement.statut === "refusé") {
-      return res.status(400).json({ message: "Le paiement est annulé." });
-    }
-
-    //  Paiement pas encore validé
-    if (paiement.statut !== "validé") {
-      return res.status(400).json({
-        message:
-          " Le paiement n'est pas encore validé. On ne peut pas valider l'inscription.",
+    if (eventPrice > 0) {
+      // 💳 Cherche le paiement associé à cette inscription
+      const paiement = await Payment.findOne({
+        inscriptionId: new mongoose.Types.ObjectId(inscription._id),
       });
+
+      // 🛑 Aucun paiement trouvé
+      if (!paiement) {
+        return res.status(400).json({ message: "Aucun paiement trouvé pour cette inscription." });
+      }
+
+      // ❌ Paiement refusé
+      if (paiement.statut === "refusé") {
+        return res.status(400).json({ message: "Le paiement a été refusé." });
+      }
+
+      // 🕒 Paiement pas encore validé
+      if (paiement.statut !== "validé") {
+        return res.status(400).json({
+          message: "Le paiement n'est pas encore validé. Impossible de valider l'inscription.",
+        });
+      }
     }
 
-    // Si tout est bon, on valide l'inscription
+    // ✅ Tout est bon, on valide !
     inscription.status = "validée";
     inscription.dateValidation = new Date();
     await inscription.save();
 
-    // 📩 On envoie un e-mail de confirmation à l'utilisateur
+    // 📧 Envoie un e-mail de confirmation
     if (utilisateur.email) {
       await sendValidationEmail(utilisateur.email, utilisateur.name);
       console.log(`📩 Email envoyé à ${utilisateur.email}`);
     }
 
-    // Réponse finale
+    // 🎉 Réponse finale
     return res.status(200).json({
-      message: " Inscription validée avec succès !",
+      message: "Inscription validée avec succès !",
       inscription,
     });
+
   } catch (error) {
-    console.error(" Erreur pendant la validation :", error);
+    console.error("Erreur pendant la validation :", error);
     return res.status(500).json({
-      message: " Une erreur est survenue.",
+      message: "Une erreur est survenue.",
       error: error.message,
     });
   }
 };
+
 
 export const annulerInscription = async (req, res) => {
   try {
@@ -352,79 +356,121 @@ export const annulerInscription = async (req, res) => {
     if (!inscription) {
       return res.status(404).json({
         success: false,
-        message: "  Inscription introuvable !",
+        message: "Inscription introuvable !",
       });
     }
 
-    //   Déjà annulée ?
+    // 🚫 Déjà annulée ?
     if (inscription.status === "annulée") {
       return res.status(400).json({
         success: false,
-        message: "  Cette inscription est déjà annulée !",
+        message: "Cette inscription est déjà annulée !",
       });
     }
 
-    //  Déjà validée → pas d'annulation possible
+    // 🚫 Déjà validée → pas d'annulation possible
     if (inscription.status === "validée") {
       return res.status(400).json({
         success: false,
-        message: " Impossible d'annuler une inscription validée !",
+        message: "Impossible d'annuler une inscription déjà validée !",
       });
     }
 
-    // 🛑 Annuler l'inscription
+    // ✅ Marquer comme annulée
     inscription.status = "annulée";
     inscription.dateAnnulation = new Date();
     await inscription.save();
 
+    // 🔍 Trouver l'utilisateur
+    const utilisateur = await User.findById(inscription.utilisateurId).select(
+      "email name"
+    );
+
+    // ✉️ Envoyer un email si email dispo
+    if (utilisateur?.email) {
+      await sendInscriptionCancelled(utilisateur.email, utilisateur.name);
+      console.log(`📩 Email d'annulation envoyé à ${utilisateur.email}`);
+    }
+
+    // ✅ Réponse finale
     return res.status(200).json({
       success: true,
-      message: "Inscription annulée avec succès !",
-      data: {
-        id: inscription._id,
-        status: inscription.status,
-        dateAnnulation: inscription.dateAnnulation,
-      },
+      message: "Inscription annulée avec succès.",
+      inscription,
     });
   } catch (error) {
-    console.error(
-      "  Erreur lors de l'annulation de l'inscription :",
-      error.message
-    );
+    console.error("Erreur pendant l'annulation :", error);
     return res.status(500).json({
       success: false,
-      message:
-        "  Une erreur s'est produite lors de l'annulation de l'inscription",
+      message: "Une erreur est survenue.",
       error: error.message,
     });
   }
 };
 
-export const supprimerInscription = async (req, res) => {
+export const supprimerInscription = async (req, res) => {};
+export const supprimerInscriptionGestionnaire = async (req, res) => {
   try {
-    const utilisateur = req.user;
+    // 👤 Le gestionnaire qui fait l'action (venant du token)
+    const gestionnaire = req.user;
+
+    // 🆔 On récupère l’ID de l’inscription à supprimer et la cause
     const { id } = req.params;
-    console.log("ID reçu :", id);
+    const { cause } = req.body;
 
-    // Vérification que l'ID est valide
+    // 🔐 Vérification : ID invalide
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ message: "ID invalide" });
+      return res.status(400).json({ message: "ID de l'inscription invalide." });
     }
 
-    // Trouver l'inscription
-    const inscription = await Inscription.findById(id);
+    // ❗ Vérification : cause invalide ou manquante
+    if (!cause || !causesAutorisees.includes(cause)) {
+      return res.status(400).json({ message: "Cause invalide ou manquante." });
+    }
+
+    // 🔎 Chercher l'inscription + récupérer l'événement lié (grâce à populate)
+    const inscription = await Inscription.findById(id).populate("evenementId");
     if (!inscription) {
-      return res.status(404).json({ message: "Inscription introuvable !" });
+      return res.status(404).json({ message: "Inscription introuvable." });
     }
 
-    // Supprimer l'inscription
+    // 👥 Chercher le participant lié à l'inscription
+    const participant = await User.findById(inscription.utilisateurId);
+    if (!participant) {
+      return res.status(404).json({ message: "Participant introuvable." });
+    }
+
+    // 💳 Supprimer le paiement s'il existe
+    await Payment.deleteOne({ inscriptionId: id });
+
+    // 🗑 Supprimer l'inscription
     await inscription.deleteOne();
-    res.status(200).json({ message: "Inscription supprimée avec succès !" });
+
+    // 📧 Préparer les infos de l'email
+    const nomParticipant =
+      participant.nom ||
+      inscription.utilisateurPublic.nomAffiché ||
+      "Participant";
+
+    const titreEvenement =
+      inscription.evenementId?.titre || "Événement inconnu";
+
+    // 📬 Envoyer l'email d'annulation
+    await sendInscriptionCancelled(
+      participant.email,
+      nomParticipant,
+      titreEvenement,
+      cause
+    );
+
+    // ✅ Réponse réussie
+    res.status(200).json({
+      message: "Inscription annulée et email envoyé avec succès.",
+    });
   } catch (error) {
-    console.error("Erreur lors de la suppression de l'inscription :", error);
+    console.error("❌ Erreur lors de la suppression :", error);
     res.status(500).json({
-      message:
-        "Une erreur s'est produite lors de la suppression de l'inscription",
+      message: "Erreur serveur lors de la suppression.",
       error: error.message,
     });
   }
