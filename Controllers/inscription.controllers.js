@@ -408,7 +408,38 @@ export const annulerInscription = async (req, res) => {
   }
 };
 
-export const supprimerInscription = async (req, res) => {};
+export const supprimerInscription = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const inscription = await Inscription.findById(id);
+
+    if (!inscription) {
+      return res.status(404).json({ message: "Inscription non trouvée" });
+    }
+
+    if (inscription.utilisateurId.toString() !== req.user.id) {
+      return res
+        .status(403)
+        .json({ message: "Non autorisé à supprimer cette inscription" });
+    }
+
+    // Delete related Paiement (optional: depends on your app logic)
+    await Payment.deleteMany({ inscriptionId: id });
+
+
+
+    // Finally delete the inscription
+    await Inscription.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "Inscription et données associées supprimées avec succès" });
+  } catch (error) {
+    console.error("Erreur lors de la suppression :", error);
+    return res
+      .status(500)
+      .json({ message: "Erreur serveur lors de la suppression de l'inscription" });
+  }
+};
 export const supprimerInscriptionGestionnaire = async (req, res) => {
   try {
     // 👤 Le gestionnaire qui fait l'action (venant du token)

@@ -33,7 +33,7 @@ const userSchema = new mongoose.Schema(
     },
     etatCompte: {
       type: String,
-      enum: ["actif", "inactif", "suspendu"],
+      enum: ["actif", "suspendu"],
       default: "actif",
     },
     resetPasswordToken: String,

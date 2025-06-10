@@ -44,7 +44,7 @@ const eventSchema = new mongoose.Schema(
 
     etat: {
       type: String,
-      enum: ["en attendant", "accepter", "refusé"],
+      enum: ["en attendant", "accepter", " "],
       default: "en attendant",
     },
 
