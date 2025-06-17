@@ -412,7 +412,9 @@ export const supprimerInscription = async (req, res) => {
   const { id } = req.params;
 
   try {
+    console.log("🔍 Suppression de l'inscription ID:", id);
     const inscription = await Inscription.findById(id);
+    console.log("📋 Inscription trouvée:", inscription);
 
     if (!inscription) {
       return res.status(404).json({ message: "Inscription non trouvée" });
@@ -431,6 +433,8 @@ export const supprimerInscription = async (req, res) => {
 
     // Finally delete the inscription
     await Inscription.findByIdAndDelete(id);
+    const check = await Inscription.findById(id);
+    console.log("📌 Inscription encore présente ?", check); // should be null
 
     return res.status(200).json({ message: "Inscription et données associées supprimées avec succès" });
   } catch (error) {
