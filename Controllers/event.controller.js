@@ -234,12 +234,12 @@ export const updateEventState = async (req, res) => {
     const { etat } = req.body; // 📌 Récupérer le nouvel état
 
     // Vérifier si l'état est valide
-    const etatsAutorises = ["en attente", "accepter", "refusé"];
+    const etatsAutorises = ["en attente", "accepter", "Refuser"];
     if (!etatsAutorises.includes(etat)) {
       return res.status(400).json({
         success: false,
         message:
-          " L'état fourni est invalide ! Choisissez parmi : 'en attente', 'accepter', 'refusé'.",
+          " L'état fourni est invalide ! Choisissez parmi : 'en attente', 'accepter', 'Refuser'.",
       });
     }
 
