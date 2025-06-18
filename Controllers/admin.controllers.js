@@ -95,10 +95,10 @@ export const getDernieresInscriptions = async (req, res) => {
 
 export const getDerniersPaiements = async (req, res) => {
   try {
-    const paiements = await Payment.find()
+    const paiements = await Payment.find({ statut: "validé" })
       .populate("utilisateurId", "name email")
       .populate("evenementId", "titre dateDebut")
-      .sort({ datePaiement: -1 }) // trie par date du paiement
+      .sort({ createdAt: -1 })
       .limit(5);
 
     res.status(200).json({ paiements });
